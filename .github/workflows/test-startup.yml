@@ -1,0 +1,37 @@
+name: CI
+
+on: [push]
+
+jobs:
+  cog_check_job:
+    runs-on: ubuntu-latest
+    name: Commit Message check
+    steps:
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+
+      - name: Conventional commits check
+        uses: oknozor/cocogitto-action@v2
+
+
+  build:
+    name: Startup
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        emacs_version:
+          - snapshot
+        include:
+          - os: macos-latest
+            emacs_version: snapshot
+    steps:
+    - uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs_version }}
+
+    - uses: actions/checkout@v2
+    - name: Check startup
+      run: make startup
