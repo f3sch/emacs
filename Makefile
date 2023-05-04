@@ -3,7 +3,7 @@
 SHELL = /bin/sh
 EMACS ?= emacs
 RM = @rm -rf
-EMACS_BATCH_OPTS = --batch --debug-init -Q
+EMACS_BATCH_OPTS = -batch -Q
 EMACS_BATCH = $(EMACS) $(EMACS_BATCH_OPTS)
 
 .PHONY: test clean spellcheck compile install

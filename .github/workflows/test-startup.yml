@@ -13,6 +13,7 @@ jobs:
 
       - name: Conventional commits check
         uses: oknozor/cocogitto-action@v2
+	with: check
 
 
   build:
