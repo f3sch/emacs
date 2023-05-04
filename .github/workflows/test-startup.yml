@@ -3,19 +3,6 @@ name: CI
 on: [push]
 
 jobs:
-  cog_check_job:
-    runs-on: ubuntu-latest
-    name: Commit Message check
-    steps:
-      - uses: actions/checkout@main
-        with:
-          fetch-depth: 0
-
-      - name: Conventional commits check
-        uses: oknozor/cocogitto-action@v2
-	with: check
-
-
   build:
     name: Startup
     runs-on: ${{ matrix.os }}

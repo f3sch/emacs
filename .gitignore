@@ -12,6 +12,7 @@ packages/
 init.el
 early-init.el
 straight
+etc/
 
 # Org-mode
 .org-id-locations
