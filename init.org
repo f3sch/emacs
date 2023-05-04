@@ -797,6 +797,453 @@ Help me.
     ([remap view-emacs-debugging] #'helpful-at-point))
 #+END_SRC
 
+* Completions
+** Basics
+*** Orderless Style
+#+BEGIN_SRC emacs-lisp
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles . (partial-completion)))
+				   (eglot (styles . (orderless))))))
+#+END_SRC
+
+*** Dabbrev
+#+BEGIN_SRC emacs-lisp
+  (use-package dabbrev
+    ;; Other useful Dabbrev configurations.
+    :custom
+    (dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
+#+END_SRC
+
+*** Marginalia
+Provide minibuffer annotations.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package marginalia
+    :custom
+    (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
+    (marginalia-max-relative-age 0)
+    (marginilia-align 'right)
+    :init
+    (marginalia-mode))
+#+END_SRC
+
+*** Icons Completion
+#+BEGIN_SRC emacs-lisp
+  (use-package all-the-icons-completion
+    :after
+    (marginalia all-the-icons)
+    :hook
+    (marginalia-mode . all-the-icons-completion-marginalia-setup)
+    :init
+    (all-the-icons-completion-mode))
+#+END_SRC
+
+*** Embark
+#+BEGIN_SRC emacs-lisp
+  (use-package embark
+    :bind
+    (("C-." . embark-act)         ;; pick some comfortable binding
+     ("C-;" . embark-dwim)        ;; good alternative: M-.
+     ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+    :init
+    ;; Optionally replace the key help with a completing-read interface
+    (setq prefix-help-command #'embark-prefix-help-command)
+    :config
+    ;; Hide the mode line of the Embark live/completions buffers
+    (add-to-list 'display-buffer-alist
+		 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+		   nil
+		   (window-parameters (mode-line-format . none)))))
+#+END_SRC
+
+** Vertico
+For minibuffer completions.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package vertico
+    :hook
+    (after-init . vertico-mode)
+    :init
+    (vertico-mode)
+    :straight (vertico :files (:defaults "extensions/*")
+		       :includes (vertico-multiform))
+    :bind
+    (:map vertico-map
+	  ("C-j" . vertico-next)
+	  ("C-k" . vertico-previous)
+	  ("C-f" . vertico-exit)
+	  :map minibuffer-local-map
+	  ("M-h" . backward-kill-word))
+    :custom
+    (vertico-cycle t)
+    (vertico-count 10)
+    (vertico-count-format '("%-5s " . "%2$s"))
+    (vertico-resize t))
+#+END_SRC
+
+** consult
+[[https://github.com/minad/consult][consult]] provides search and navigation commands based on the Emacs completion
+function [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Minibuffer-Completion.html][completing-read]]. Completion allows you to quickly select an item from a
+list of candidates. Consult offers asynchronous and interactive =consult-grep=
+and =consult-ripgrep= commands, and the line-based search command
+=consult-line=. Furthermore Consult provides an advanced buffer switching
+command =consult-buffer= to switch between buffers, recently opened files,
+bookmarks and buffer-like candidates from other sources. Some of the Consult
+commands are enhanced versions of built-in Emacs commands. For example the
+command =consult-imenu= presents a flat list of the Imenu with [[#live-previews][live preview]],
+[[#narrowing-and-grouping][grouping and narrowing]]. Please take a look at the [[#available-commands][full list of commands]].
+
+Consult is fully compatible with completion systems centered around the standard
+Emacs =completing-read= API, notably the default completion system, [[https://github.com/minad/vertico][Vertico]],
+[[https://github.com/protesilaos/mct][Mct]], and [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Icomplete.html][Icomplete]].
+
+This package keeps the completion system specifics to a minimum. The ability of
+the Consult commands to work well with arbitrary completion systems is one of
+the main advantages of the package. Consult fits well into existing setups and
+it helps you to create a full completion environment out of small and
+independent components.
+
+#+begin_src emacs-lisp
+  (use-package consult
+    :straight (consult :type git :host github :repo "minad/consult")
+    :bind (("C-c M-x" . consult-mode-command)
+	   ("C-c h"   . consult-history)
+	   ("C-c K"   . consult-kmacro)
+	   ("C-c i"   . consult-info)
+	   ([remap Info-search] . consult-info)
+
+	   ("C-*"     . consult-org-heading)
+	   ("C-c e l" . find-library)
+	   ("C-c e q" . set-variable)
+	   ("C-c p f" . project-find-file)
+
+	   ;; C-x bindings (ctl-x-map)
+	   ("C-x M-:" . consult-complex-command)
+	   ("C-x b"   . consult-buffer)
+	   ("C-x 4 b" . consult-buffer-other-window)
+	   ("C-x 5 b" . consult-buffer-other-frame)
+	   ("C-x r b" . consult-bookmark)
+	   ("C-x p b" . consult-project-buffer)
+	   ;; Other custom bindings
+	   ("M-y"     . consult-yank-pop)
+	   ;; M-g bindings (goto-map)
+	   ("M-g e"   . consult-compile-error)
+	   ("M-g g"   . consult-goto-line)
+	   ("M-g M-g" . consult-goto-line)
+	   ("M-g l"   . consult-goto-line)
+	   ([remap goto-line] . consult-goto-line)
+	   ("M-g o"   . consult-org-heading)
+	   ("M-g m"   . consult-mark)
+	   ("M-g k"   . consult-global-mark)
+	   ("M-g i"   . consult-imenu)
+	   ("M-g I"   . consult-imenu-multi)
+	   ;; M-s bindings (search-map)
+	   ("M-s f"   . consult-find)
+	   ("M-s M-g" . consult-grep)
+	   ("M-s g"   . consult-git-grep)
+	   ("M-s r"   . consult-ripgrep)
+	   ("M-s l"   . consult-line)
+	   ("M-s L"   . consult-line-multi)
+	   ("M-s k"   . consult-keep-lines)
+	   ("M-s u"   . consult-focus-lines)
+	   ;; Isearch integration
+	   ("M-s e"   . consult-isearch-history)
+	   :map isearch-mode-map
+	   ("M-e"     . consult-isearch-history)
+	   ("M-s e"   . consult-isearch-history)
+	   ("M-s l"   . consult-line)
+	   ("M-s L"   . consult-line-multi)
+	   ;; Minibuffer history
+	   :map minibuffer-local-map
+	   ("M-s"     . consult-history)
+	   ("M-r"     . consult-history))
+
+    ;; Enable automatic preview at point in the *Completions* buffer. This is
+    ;; relevant when you use the default completion UI.
+    :hook (completion-list-mode . consult-preview-at-point-mode)
+
+    :custom
+    (consult-narrow-key "<")
+    (consult-async-min-input 1)
+    (consult-async-split-style 'semicolon)
+    (consult-line-start-from-top t)
+
+    :custom-face
+    (consult-file ((t (:inherit font-lock-string-face))))
+
+    :functions
+    (consult-register-format
+     consult-register-window
+     consult-xref)
+
+    ;; The :init configuration is always executed (Not lazy)
+    :init
+    (with-eval-after-load 'evil
+      (evil-global-set-key 'motion "go" #'consult-outline)
+      (evil-global-set-key 'motion "gm" #'consult-mark)
+      (evil-global-set-key 'motion "gM" #'consult-imenu))
+
+    ;; Optionally configure the register formatting. This improves the register
+    ;; preview for `consult-register', `consult-register-load',
+    ;; `consult-register-store' and the Emacs built-ins.
+    (setq register-preview-delay 0.5
+	  register-preview-function #'consult-register-format)
+
+    ;; Optionally tweak the register preview window.
+    ;; This adds thin lines, sorting and hides the mode line of the window.
+    (advice-add #'register-preview :override #'consult-register-window)
+
+    ;; Use Consult to select xref locations with preview
+    (setq xref-show-xrefs-function #'consult-xref
+	  xref-show-definitions-function #'consult-xref)
+
+    ;; Configure other variables and modes in the :config section,
+    ;; after lazily loading the package.
+    :config
+
+    (consult-customize
+     consult-theme
+     :preview-key '(:debounce 0.2 any)
+     consult-ripgrep
+     consult-git-grep
+     consult-grep
+     consult-bookmark
+     consult-recent-file
+     consult-xref
+     consult--source-bookmark
+     consult--source-file-register
+     consult--source-recent-file
+     consult--source-project-recent-file
+     :preview-key '(:debounce 0.4 any)))
+#+end_src
+
+*** consult-dir
+
+[[https://github.com/karthink/consult-dir][consult-dir]] allows you to easily insert directory paths into the minibuffer
+prompt in Emacs.
+
+When using the minibuffer, you can switch - with completion and filtering
+provided by your completion setup - to any directory you've visited recently, or
+to a project, a bookmarked directory or even a remote host via tramp. The
+minibuffer prompt will be replaced with the directory you choose.
+
+Why would you want to do this? To avoid “navigating” long distances when picking
+a file or directory in any Emacs command that requires one.
+
+Think of it like the shell tools [[https://github.com/wting/autojump][autojump]], [[https://github.com/clvv/fasd][fasd]] or z but for Emacs. See the
+demos section below for many more examples. =consult-dir= works with all Emacs
+commands that require you to specify file paths, and with [[https://github.com/oantolin/embark][Embark actions]] on
+files.
+
+The directory candidates are collected from user bookmarks, Projectile project
+roots (if available), project.el project roots (if available) and recentf file
+locations. The =default-directory= variable is not changed in the process.
+
+#+begin_src emacs-lisp
+  (use-package consult-dir
+    :bind (("M-g d"   . consult-dir)
+	   :map minibuffer-local-completion-map
+	   ("M-s f" . consult-dir-jump-file)
+	   ("M-g d" . consult-dir)))
+#+end_src
+
+*** consult-flycheck
+
+#+begin_src emacs-lisp
+  (use-package consult-flycheck
+    :bind ("M-g f" . consult-flycheck))
+#+end_src
+
+*** consult-git-log-grep
+
+#+begin_src emacs-lisp
+  (use-package consult-git-log-grep
+    :custom
+    (consult-git-log-grep-open-function #'magit-show-commit))
+#+end_src
+
+*** consult-eglot
+#+begin_src emacs-lisp
+  (use-package consult-eglot
+    :after (eglot consult)
+    :general
+    ([remap xref-find-apropos] #'consult-eglot-symbols))
+#+end_src
+
+*** kind-icon
+#+BEGIN_SRC emacs-lisp
+(use-package kind-icon
+  :after corfu
+  :custom
+  (kind-icon-default-face 'corfu-default)
+  (kind-icon-use-icons t)
+  (kind-icon-blend-background nil)
+  (kind-icon-blend-frac 0.08)
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+#+END_SRC
+
+** Corfu
+[[https://github.com/minad/corfu][corfu]] enhances completion at point with a small completion popup. The current
+candidates are shown in a popup below or above the point. Corfu is the
+minimalistic =completion-in-region= counterpart of the [[https://github.com/minad/vertico][Vertico]] minibuffer UI.
+
+Corfu is a small package, which relies on the Emacs completion facilities and
+concentrates on providing a polished completion UI. Completions are either
+provided by commands like =dabbrev-completion= or by pluggable backends (
+=completion-at-point-functions=, Capfs). Most programming language major modes
+implement a Capf. The Emacs language server clients use Capfs, which retrieve
+completions from the server via the language server protocol (LSP). Corfu does
+not include its own completion backends. The Emacs built-in Capfs and the Capfs
+provided by other programming language packages are usually sufficient. A few
+additional Capfs and completion utilities are provided by the [[https://github.com/minad/cape][Cape]] package.
+
+*NOTE*: Corfu uses child frames to show the popup and falls back to the default
+setting of the =completion-in-region-function= on non-graphical displays. If you
+want to use Corfu in the terminal, install the package [[https://codeberg.org/akib/emacs-corfu-terminal][corfu-terminal]], which
+provides an alternative overlay-based display.
+
+#+begin_src emacs-lisp
+  (use-package corfu
+    :straight (corfu :type git :host github :repo "minad/corfu"
+		     :files (:defaults "extensions/*")
+		     :includes (corfu-history
+				corfu-popupinfo))
+    :demand t
+    :bind (("M-/" . completion-at-point)
+	   :map corfu-map
+	   ("C-n"      . corfu-next)
+	   ("C-p"      . corfu-previous)
+	   ("<escape>" . corfu-quit)
+	   ("<return>" . corfu-insert)
+	   ("M-d"      . corfu-info-documentation)
+	   ("M-l"      . corfu-info-location)
+	   ("M-."      . corfu-move-to-minibuffer))
+    :custom
+    ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
+    ;; want to perform completion
+    (tab-always-indent 'complete)
+    (completion-cycle-threshold nil)      ; Always show candidates in menu
+
+    ;; Only use `corfu' when calling `completion-at-point' or
+    ;; `indent-for-tab-command'
+    (corfu-auto t)
+    (corfu-auto-prefix 2)
+    (corfu-auto-delay 0.1)
+
+    (corfu-min-width 80)
+    (corfu-max-width corfu-min-width)     ; Always have the same width
+    (corfu-count 14)
+    (corfu-scroll-margin 4)
+    (corfu-cycle t)
+
+    ;; `nil' means to ignore `corfu-separator' behavior, that is, use the older
+    ;; `corfu-quit-at-boundary' = nil behavior. Set this to separator if using
+    ;; `corfu-auto' = `t' workflow (in that case, make sure you also set up
+    ;; `corfu-separator' and a keybind for `corfu-insert-separator', which my
+    ;; configuration already has pre-prepared). Necessary for manual corfu usage with
+    ;; orderless, otherwise first component is ignored, unless `corfu-separator'
+    ;; is inserted.
+    (corfu-quit-at-boundary nil)
+    (corfu-separator ?\s)            ; Use space
+    (corfu-quit-no-match 'separator) ; Don't quit if there is `corfu-separator' inserted
+    (corfu-preview-current 'insert)  ; Preview first candidate. Insert on input if only one
+    (corfu-preselect-first t)        ; Preselect first candidate?
+
+    ;; Other
+    (corfu-echo-documentation nil)        ; Already use corfu-popupinfo
+    :preface
+    (defun corfu-enable-always-in-minibuffer ()
+      "Enable Corfu in the minibuffer if Vertico/Mct are not active."
+      (unless (or (bound-and-true-p mct--active) ; Useful if I ever use MCT
+		  (bound-and-true-p vertico--input))
+	(setq-local corfu-auto nil)       ; Ensure auto completion is disabled
+	(corfu-mode 1)))
+
+    (defun corfu-move-to-minibuffer ()
+      (interactive)
+      (let (completion-cycle-threshold completion-cycling)
+	(apply #'consult-completion-in-region completion-in-region--data)))
+    :config
+    (global-corfu-mode)
+    (corfu-history-mode)
+
+    ;; In EShell enable some special options.
+    (add-hook 'eshell-mode-hook
+	      (lambda () (setq-local corfu-quit-at-boundary t
+				     corfu-quit-no-match t
+				     corfu-auto nil)
+		(corfu-mode)))
+
+    ;; Show some information in eldoc.
+    (eldoc-add-command #'corfu-insert)
+
+    ;; Enable Corfu more generally for every minibuffer, as long as no other
+    ;; completion UI is active. If you use Mct or Vertico as your main
+    ;; minibuffer completion UI. From
+    ;; https://github.com/minad/corfu#completing-with-corfu-in-the-minibuffer
+    (add-hook 'minibuffer-setup-hook #'corfu-enable-always-in-minibuffer 1))
+#+end_src
+
+*** corfu-popupinfo
+
+#+begin_src emacs-lisp
+(use-package corfu-popupinfo
+  :after corfu
+  :hook (corfu-mode . corfu-popupinfo-mode)
+  :bind (:map corfu-map
+              ("M-n" . corfu-popupinfo-scroll-up)
+              ("M-p" . corfu-popupinfo-scroll-down)
+              ([remap corfu-show-documentation] . corfu-popupinfo-toggle))
+  :custom
+  (corfu-popupinfo-delay 0.5)
+  (corfu-popupinfo-max-width 70)
+  (corfu-popupinfo-max-height 20)
+  ;; Also here to be extra-safe that this is set when `corfu-popupinfo' is
+  ;; loaded. I do not want documentation shown in both the echo area and in
+  ;; the `corfu-popupinfo' popup.
+  (corfu-echo-documentation nil))
+#+end_src
+
+** Cape
+[[https://github.com/minad/cape][cape]] provides Completion At Point Extensions which can be used in combination
+with the [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. The completion
+backends used by =completion-at-point= are so called
+=completion-at-point-functions= (Capfs). In principle, the Capfs provided by
+Cape can also be used by [[https://github.com/company-mode/company-mode][Company]].
+
+Cape has the super power to transform Company backends into Capfs and merge
+multiple Capfs into a Super-Capf! These transformers allow you to still take
+advantage of Company backends even if you are not using Company as frontend.
+
+#+begin_src emacs-lisp
+(use-package cape
+  :demand t
+  :bind (("C-c . p" . completion-at-point)
+         ("C-c . t" . complete-tag)
+         ("C-c . d" . cape-dabbrev)
+         ("C-c . h" . cape-history)
+         ("C-c . f" . cape-file)
+         ("C-c . k" . cape-keyword)
+         ("C-c . s" . cape-symbol)
+         ("C-c . a" . cape-abbrev)
+         ("C-c . l" . cape-line)
+         ("C-c . w" . cape-dict)
+         ("C-c . \\" . cape-tex)
+         ("C-c . _" . cape-tex)
+         ("C-c . ^" . cape-tex)
+         ("C-c . &" . cape-sgml)
+         ("C-c . r" . cape-rfc1345))
+  :init
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-abbrev))
+#+end_src
+
 * VC
 ** Basics
 Follow symlinks
@@ -807,12 +1254,11 @@ Follow symlinks
     (vc-command-messages t)
     (vc-follow-symlinks t)
     (vc-git-diff-switches '("-w" "-U3"))
-    (vc-handled-backends '(Git))
     (vc-make-backup-files t))
 #+END_SRC
 
 ** Magit
-Possibly the most convincing reason to use EMACS? No, seriously it is awesome.
+Possibly the most convincing reason to use EMACS? No, seriously it is awesome!
 
 #+BEGIN_SRC emacs-lisp
   (use-package magit
@@ -1012,4 +1458,7 @@ Hence, I add it as a safe pair, with =+tangle-config= function, to the
 #+END_SRC
 
 Installs a file local hook, to tangle this file.
-# Local Variables: after-save-hook: +tangle-config End:
+# Local Variables:
+# after-save-hook: +tangle-config
+# eval: (display-line-numbers-mode)
+# End:
