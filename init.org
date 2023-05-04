@@ -126,6 +126,17 @@ For now I use straight.el as a package manager.
 #+end_src
 
 * General
+** Identity
+Some functionality uses this to identify you, e.g. GPG configuration, email
+clients, file templates and snippets.
+
+#+BEGIN_SRC emacs-lisp
+(setq user-full-name "Felix Schlepper"
+      user-mail-address "f3sch.git@outlook.com"
+      user-login-name "f3sch"
+      user-real-login-name "f3sch")
+#+END_SRC
+
 ** Library Functions
 Mostly taken from doomemacs.
 #+BEGIN_SRC emacs-lisp
