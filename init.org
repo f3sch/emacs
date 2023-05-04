@@ -1497,6 +1497,22 @@ Hence Something visually appealing.
 #+END_SRC
 
 * Programming
+** Treesitter
+The future.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package treesit
+    :straight (:type built-in)
+    :custom
+    (treesit-font-lock-level 4))
+
+  (use-package treesit-auto
+    :straight (:host github :repo "renzmann/treesit-auto")
+    :hook (after-init . global-treesit-auto-mode)
+    :custom
+    (treesit-auto-install 'prompt))
+#+END_SRC
+
 ** Formatting
 #+BEGIN_SRC emacs-lisp
   (use-package apheleia
