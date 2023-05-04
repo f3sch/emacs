@@ -129,40 +129,148 @@ For now I use straight.el as a package manager.
 ** Library Functions
 Mostly taken from doomemacs.
 #+BEGIN_SRC emacs-lisp
-(defmacro appendq! (sym &rest lists)
-  "Append LISTS to SYM in place."
-  `(setq ,sym (append ,sym ,@lists)))
+  (defmacro appendq! (sym &rest lists)
+    "Append LISTS to SYM in place."
+    `(setq ,sym (append ,sym ,@lists)))
 
-(defmacro setq! (&rest settings)
-  "A more sensible `setopt' for setting customizable variables.
+  (defmacro setq! (&rest settings)
+    "A more sensible `setopt' for setting customizable variables.
 
-This can be used as a drop-in replacement for `setq' and *should* be used
-instead of `setopt'. Unlike `setq', this triggers custom setters on variables.
-Unlike `setopt', this won't needlessly pull in dependencies."
-  (macroexp-progn
-   (cl-loop for (var val) on settings by 'cddr
-            collect `(funcall (or (get ',var 'custom-set) #'set-default-toplevel-value)
-                              ',var ,val))))
+      This can be used as a drop-in replacement for `setq' and *should* be used
+      instead of `setopt'. Unlike `setq', this triggers custom setters on variables.
+      Unlike `setopt', this won't needlessly pull in dependencies."
+    (macroexp-progn
+     (cl-loop for (var val) on settings by 'cddr
+	      collect `(funcall (or (get ',var 'custom-set) #'set-default-toplevel-value)
+				',var ,val))))
 
-(defmacro delq! (elt list &optional fetcher)
-  "`delq' ELT from LIST in-place.
+  (defmacro delq! (elt list &optional fetcher)
+    "`delq' ELT from LIST in-place.
 
-If FETCHER is a function, ELT is used as the key in LIST (an alist)."
-  `(setq ,list (delq ,(if fetcher
-                          `(funcall ,fetcher ,elt ,list)
-                        elt)
-                     ,list)))
+      If FETCHER is a function, ELT is used as the key in LIST (an alist)."
+    `(setq ,list (delq ,(if fetcher
+			    `(funcall ,fetcher ,elt ,list)
+			  elt)
+		       ,list)))
 
-(defmacro pushnew! (place &rest values)
-  "Push VALUES sequentially into PLACE, if they aren't already present.
-This is a variadic `cl-pushnew'."
-  (let ((var (make-symbol "result")))
-    `(dolist (,var (list ,@values) (with-no-warnings ,place))
-       (cl-pushnew ,var ,place :test #'equal))))
+  (defmacro pushnew! (place &rest values)
+    "Push VALUES sequentially into PLACE, if they aren't already present.
+      This is a variadic `cl-pushnew'."
+    (let ((var (make-symbol "result")))
+      `(dolist (,var (list ,@values) (with-no-warnings ,place))
+	 (cl-pushnew ,var ,place :test #'equal))))
 
-(defmacro prependq! (sym &rest lists)
-  "Prepend LISTS to SYM in place."
-  `(setq ,sym (append ,@lists ,sym)))
+  (defmacro prependq! (sym &rest lists)
+    "Prepend LISTS to SYM in place."
+    `(setq ,sym (append ,@lists ,sym)))
+
+  (defmacro lambda! (arglist &rest body)
+    "Returns (cl-function (lambda ARGLIST BODY...))
+  The closure is wrapped in `cl-function', meaning ARGLIST will accept anything
+  `cl-defun' will. Implicitly adds `&allow-other-keys' if `&key' is present in
+  ARGLIST."
+    (declare (indent defun) (doc-string 1) (pure t) (side-effect-free t))
+    `(cl-function
+      (lambda
+	,(letf! (defun* allow-other-keys (args)
+		  (mapcar
+		   (lambda (arg)
+		     (cond ((nlistp (cdr-safe arg)) arg)
+			   ((listp arg) (allow-other-keys arg))
+			   (arg)))
+		   (if (and (memq '&key args)
+			    (not (memq '&allow-other-keys args)))
+		       (if (memq '&aux args)
+			   (let (newargs arg)
+			     (while args
+			       (setq arg (pop args))
+			       (when (eq arg '&aux)
+				 (push '&allow-other-keys newargs))
+			       (push arg newargs))
+			     (nreverse newargs))
+			 (append args (list '&allow-other-keys)))
+		     args)))
+	   (allow-other-keys arglist))
+	,@body)))
+
+  (defmacro letf! (bindings &rest body)
+    "Temporarily rebind function, macros, and advice in BODY.
+
+  Intended as syntax sugar for `cl-letf', `cl-labels', `cl-macrolet', and
+  temporary advice.
+
+  BINDINGS is either:
+
+    A list of, or a single, `defun', `defun*', `defmacro', or `defadvice' forms.
+    A list of (PLACE VALUE) bindings as `cl-letf*' would accept.
+
+  TYPE is one of:
+
+    `defun' (uses `cl-letf')
+    `defun*' (uses `cl-labels'; allows recursive references),
+    `defmacro' (uses `cl-macrolet')
+    `defadvice' (uses `defadvice!' before BODY, then `undefadvice!' after)
+
+  NAME, ARGLIST, and BODY are the same as `defun', `defun*', `defmacro', and
+  `defadvice!', respectively.
+
+  \(fn ((TYPE NAME ARGLIST &rest BODY) ...) BODY...)"
+    (declare (indent defun))
+    (setq body (macroexp-progn body))
+    (when (memq (car bindings) '(defun defun* defmacro defadvice))
+      (setq bindings (list bindings)))
+    (dolist (binding (reverse bindings) body)
+      (let ((type (car binding))
+	    (rest (cdr binding)))
+	(setq
+	 body (pcase type
+		(`defmacro `(cl-macrolet ((,@rest)) ,body))
+		(`defadvice `(progn (defadvice! ,@rest)
+				    (unwind-protect ,body (undefadvice! ,@rest))))
+		((or `defun `defun*)
+		 `(cl-letf ((,(car rest) (symbol-function #',(car rest))))
+		    (ignore ,(car rest))
+		    ,(if (eq type 'defun*)
+			 `(cl-labels ((,@rest)) ,body)
+		       `(cl-letf (((symbol-function #',(car rest))
+				   (lambda! ,(cadr rest) ,@(cddr rest))))
+			  ,body))))
+		(_
+		 (when (eq (car-safe type) 'function)
+		   (setq type (list 'symbol-function type)))
+		 (list 'cl-letf (list (cons type rest)) body)))))))
+
+
+  (defmacro quiet! (&rest forms)
+    "Run FORMS without generating any output.
+
+    This silences calls to `message', `load', `write-region' and anything that
+    writes to `standard-output'. In interactive sessions this inhibits output to the
+    echo-area, but not to *Messages*."
+    `(if init-file-debug
+	 (progn ,@forms)
+       ,(if noninteractive
+	    `(letf! ((standard-output (lambda (&rest _)))
+		     (defun message (&rest _))
+		     (defun load (file &optional noerror nomessage nosuffix must-suffix)
+		       (funcall load file noerror t nosuffix must-suffix))
+		     (defun write-region (start end filename &optional append visit lockname mustbenew)
+		       (unless visit (setq visit 'no-message))
+		       (funcall write-region start end filename append visit lockname mustbenew)))
+		    ,@forms)
+	  `(let ((inhibit-message t)
+		 (save-silently t))
+	     (prog1 ,@forms (message ""))))))
+
+
+  (defun doom-shut-up-a (fn &rest args)
+    "Generic advisor for silencing noisy functions.
+
+      In interactive Emacs, this just inhibits messages from appearing in the
+      minibuffer. They are still logged to *Messages*.
+
+      In tty Emacs, messages are suppressed completely."
+    (quiet! (apply fn args)))
 #+END_SRC
 
 ** Config File
@@ -1357,7 +1465,14 @@ Hence Something visually appealing.
     (setq undo-tree-visualizer-diff t
 	  undo-tree-auto-save-history t
 	  undo-tree-visualizer-timestamps t
-	  undo-tree-enable-undo-in-region t))
+	  undo-tree-enable-undo-in-region t
+	  undo-limit 800000           ; 800kb (default is 160kb)
+	  undo-strong-limit 12000000  ; 12mb  (default is 240kb)
+	  undo-outer-limit 128000000)
+    ;; Undo-tree is too chatty about saving its history files. This doesn't
+    ;; totally suppress it logging to *Messages*, it only stops it from appearing
+    ;; in the echo-area.
+    (advice-add #'undo-tree-save-history :around #'doom-shut-up-a))
 #+END_SRC
 
 * Org
