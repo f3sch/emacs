@@ -1578,7 +1578,10 @@ Giving parenthesis some brains.
 * EMail
 #+BEGIN_SRC emacs-lisp
   (use-package mu4e
+    :unless (eq system-type 'darwin)
     :commands mu4e
+    :init
+    (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
     :config
     ;; use mu4e for e-mail in emacs
     (setq mail-user-agent 'mu4e-user-agent)
@@ -1782,6 +1785,7 @@ Giving parenthesis some brains.
 ** Patch-View
 #+BEGIN_SRC emacs-lisp
   (use-package message-view-patch
+    :unless (eq system-type 'darwin)
     :after mu4e
     :hook (gnus-part-display . message-view-patch-highlight))
 #+END_SRC
