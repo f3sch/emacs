@@ -2034,10 +2034,12 @@ subsequently saved.
 A simple function that tangles this file.
 
 #+BEGIN_SRC emacs-lisp
-  (defun +tangle-config () "Tangle the `+config-file'."	 (message "Start
-  tangling.")  (require 'org) (org-babel-tangle-file +config-file
-  (file-name-concat user-emacs-directory "init.el") "emacs-lisp")
-  (message "Successfully tangled config file."))
+  (defun +tangle-config ()
+    "Tangle the `+config-file'."
+    (message "Start tangling.")
+    (require 'org)
+    (org-babel-tangle-file +config-file (file-name-concat user-emacs-directory "init.el") "emacs-lisp")
+    (message "Successfully tangled config file."))
 #+END_SRC
 
 ** Add-hook
