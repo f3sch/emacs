@@ -44,7 +44,7 @@ Maximize Frame and do not show unstyled Emacs.
 #+begin_src emacs-lisp :tangle early-init.el
   (setq-default frame-inhibit-implied-resize t)
   ;; HACK: Don't show size info (or anything else) in frame title
-  (setq-default frame-title-format "\n")
+  (setq-default frame-title-format "")
   ;; Disable start-up screen
   (setq-default inhibit-startup-screen t)
   (setq-default inhibit-startup-message t)
