@@ -1596,6 +1596,7 @@ Follow symlinks
     :custom
     (vc-command-messages t)
     (vc-follow-symlinks t)
+    (vc-handled-backends '(Git))
     (vc-git-diff-switches '("-w" "-U3"))
     (vc-make-backup-files t))
 #+END_SRC
