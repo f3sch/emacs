@@ -9,17 +9,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        emacs_version:
-          - snapshot
-        include:
-          - os: macos-latest
-            emacs_version: snapshot
+        os: [ubuntu-latest, macos-latest]
+        emacs_version: [snapshot]
+
     steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      id: cache-el-get
+      with:
+        path: var/el-get
+        key: ${{ matrix.os }}-emacs-${{ matrix.emacs_version }}-${{ hashFiles('init.org', 'Makefile') }}
     - uses: purcell/setup-emacs@master
       with:
         version: ${{ matrix.emacs_version }}
-
-    - uses: actions/checkout@v2
+    - name: Install Homebrew dependencies (on macOS)
+      if: matrix.os == 'macos-latest'
+      run: env HOMEBREW_NO_AUTO_UPDATE=1 brew install mu
+    - name: Install APT dependencies (on Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt install git meson libgmime-3.0-dev libxapian-dev -y
     - name: Check startup
       run: make startup
