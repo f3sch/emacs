@@ -408,6 +408,20 @@ Saves the last position of pointer in a file.
     (save-place-forget-unreadable-files t))
 #+END_SRC
 
+** Server
+Embrace the daemon.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package server
+    :when (display-graphic-p)
+    :straight (:type built-in)
+    :defer 10
+    :config
+    (when-let (name (getenv "EMACS_SERVER_NAME"))
+      (setq server-name name))
+    (unless (server-running-p)
+      (server-start)))
+#+END_SRC
 #+END_SRC
 
 ** Clipboard
