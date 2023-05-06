@@ -1,4 +1,13 @@
 #!/bin/sh -e
+
+
+echo "Checking parens..."
+${EMACS:=emacs} -nw --batch -Q \
+		        --eval "(progn
+                        (find-file \"init.el\")
+                        (check-parens))"
+echo "No formatting issues"
+
 echo "Attempting startup..."
 ${EMACS:=emacs} -nw --batch \
                 --eval '(progn
