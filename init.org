@@ -422,6 +422,21 @@ Embrace the daemon.
     (unless (server-running-p)
       (server-start)))
 #+END_SRC
+
+** Autorevert
+#+BEGIN_SRC emacs-lisp
+  (use-package autorevert
+    ;; revert buffers when their files/state have changed
+    :straight (:type built-in)
+    :hook (after-init . global-auto-revert-mode)
+    :config
+    (setq auto-revert-verbose t ; let us know when it happens
+	  auto-revert-use-notify nil
+	  auto-revert-stop-on-user-input nil
+	  ;; Only prompts for confirmation when buffer is unsaved.
+	  revert-without-query (list ".")))
+#+END_SRC
+
 #+END_SRC
 
 ** Clipboard
