@@ -688,13 +688,16 @@ Make History a bit longer.
 Persistent History, have some persistency.
 
 #+BEGIN_SRC emacs-lisp
-  (add-hook 'after-init-hook #'savehist-mode)
-  (setq savehist-additional-variables '(mark-ring
-					global-mark-ring
-					search-ring
-					regexp-search-ring
-					extended-command-history)
-	savehist-autosave-interval 300)
+  (use-package savehist
+    :straight (:type built-in)
+    :hook (after-init . savehist-mode)
+    :custom
+    (savehist-additional-variables '(mark-ring global-mark-ring
+					       search-ring regexp-search-ring
+					       register-alist
+					       kill-ring
+					       extended-command-history))
+    (savehist-autosave-interval 300))
 #+END_SRC
 
 ** Understand the more common ~sentence~
