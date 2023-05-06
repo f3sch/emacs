@@ -338,22 +338,27 @@ Emacs cleans sometimes up.
 I do not need to know when it does...
 
 #+BEGIN_SRC emacs-lisp
-  (defun +no-msg (function)
-    "Prevent FUNCTION from showing `Wrote <FILE>' messages. (The
-  messages are still logged to `*Messages*'.)"
-    (let ((inhibit-message  t))	   (funcall function)))
-  (advice-add 'recentf-save-list :around '+no-msg)
-  (add-hook 'after-init-hook #'recentf-mode)
-  (with-eval-after-load 'recentf
-    (setq recentf-max-saved-items 300
-	  recentf-exclude
-	  '("\\.?cache" ".cask" "url" "COMMIT_EDITMSG\\'" "bookmarks"
-	    "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
-	    "\\.?ido\\.last$" "\\.revive$" "/G?TAGS$" "/.elfeed/"
-	    "^/tmp/" "^/var/folders/.+$" "^/ssh:" "/persp-confs/"
-	    (lambda (file) (file-in-directory-p file package-user-dir))))
+  (use-package recentf
+    :straight (:type built-in)
+    :hook (after-init . recentf-mode)
+    :custom
+    (recentf-max-saved-items 300)
+
+    (recentf-exclude
+     '("\\.?cache" ".cask" "url" "COMMIT_EDITMSG\\'" "bookmarks"
+       "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
+       "\\.?ido\\.last$" "\\.revive$" "/G?TAGS$" "/.elfeed/"
+       "^/tmp/" "^/var/folders/.+$" "^/ssh:" "/persp-confs/"
+       (concat "^" (regexp-quote (or (getenv "XDG_RUNTIME_DIR")
+				     "/run")))
+       (lambda (file) (file-in-directory-p file package-user-dir))))
+    :config
+
+    (advice-add 'recentf-save-list :around #'doom-shut-up-a)
     (push (expand-file-name recentf-save-file) recentf-exclude)
-    (add-to-list 'recentf-filename-handlers #'abbreviate-file-name))
+    (add-to-list 'recentf-filename-handlers #'abbreviate-file-name)
+    (setq recentf-auto-cleanup   (if (daemonp) 300))
+    (add-hook 'kill-emacs #'recentf-cleanup))
 #+END_SRC
 
 ** Text Encoding
