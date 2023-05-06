@@ -1113,14 +1113,203 @@ I use =general= for better keybindings.
 
 Define leader keys.
 #+BEGIN_SRC emacs-lisp
-  (defconst +leader-key
-    "SPC"
-    "The global leader key for EVIl.")
+  (general-create-definer +leader-key
+    :prefix "SPC")
 
-  (defconst +local-leader-key
-    "SPC m"
-    "The local leader key for EVIl.")
+  (general-create-definer +local-leader-key
+    :prefix "SPC m")
 #+END_SRC
+
+* Windows/Buffers
+** Windows
+*** Winner
+#+BEGIN_SRC emacs-lisp
+    (use-package winner
+      :straight (:type built-in)
+      :config
+      (winner-mode))
+#+END_SRC
+
+*** Perspectives
+#+BEGIN_SRC emacs-lisp
+  (use-package perspective
+    :bind
+    ("C-x C-b" . persp-list-buffers)         ; or use a nicer switcher, see below
+    :custom
+    (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
+    :init
+    (persp-mode))
+#+END_SRC
+
+*** Functions
+#+BEGIN_SRC emacs-lisp
+  (defun +evil-window-split-follow ()
+    "Split current window horizontally and focus new window."
+    (interactive)
+    (let ((evil-split-window-below (not evil-split-window-below)))
+      (call-interactively #'evil-window-split)))
+
+  (defun +evil-window-vsplit-follow ()
+    "Split current window vertically and focus new window."
+    (interactive)
+    (let ((evil-vsplit-window-right (not evil-vsplit-window-right)))
+      (call-interactively #'evil-window-vsplit)))
+#+END_SRC
+
+*** Keybindings
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :keymaps 'normal
+
+    ;; Name
+    "w" '(:ignore t :wk "Window Managment")
+
+    ;; Movement
+    "wl" '(windmove-right :wk "Move Right")
+    "wj" '(windmove-down :wk "Move Down")
+    "wk" '(windmove-up :wk "Move Up")
+    "wh" '(windmove-left :wk "Move Left")
+
+    ;; Swap
+    "wsh" '(windmove-swap-states-right :wk "Swap Right")
+    "wsj" '(windmove-swap-states-down :wk "Swap Down")
+    "wsk" '(windmove-swap-states-up :wk "Swap Up")
+    "wsl" '(windmove-swap-states-left :wk "Swap Left")
+
+    ;; Re-/Undo
+    "wu" '(winner-undo :wk "Undo")
+    "wr" '(winner-redo :wk "Redo")
+
+    ;; Split
+    "ws" '(evil-window-split :wk "Split")
+    "wS" '(+evil-window-split-follow :wk "Split and Follow")
+    "wv" '(evil-window-vsplit :wk "VSplit")
+    "wV" '(+evil-window-vsplit-follow :wk "VSplit and Follow")
+
+    ;; Delete
+    "wd" '(evil-window-delete :wk "Delete")
+    "wDh" '(windmove-delete-right :wk "Delete Right")
+    "wDj" '(windmove-delete-down :wk "Delete Down")
+    "wDk" '(windmove-delete-up :wk "Delete Up")
+    "wDl" '(windmove-delete-left :wk "Delete Left"))
+#+END_SRC
+
+** Buffers
+#+BEGIN_SRC emacs-lisp
+  (use-package bufler
+    :config
+    (bufler-defgroups
+     (group
+      ;; Subgroup collecting all named workspaces.
+      (auto-workspace))
+     (group
+      ;; Subgroup collecting all `help-mode' and `info-mode' buffers.
+      (group-or "*Help/Info*"
+		(mode-match "*Help*" (rx bos "help-"))
+		(mode-match "*Info*" (rx bos "info-"))))
+     (group
+      ;; Subgroup collecting all special buffers (i.e. ones that are not
+      ;; file-backed), except `magit-status-mode' buffers (which are allowed to fall
+      ;; through to other groups, so they end up grouped with their project buffers).
+      (group-and "*Special*"
+		 (lambda (buffer)
+		   (unless (or (funcall (mode-match "Magit" (rx bos "magit-status"))
+					buffer)
+			       (funcall (mode-match "Dired" (rx bos "dired"))
+					buffer)
+			       (funcall (auto-file) buffer))
+		     "*Special*")))
+      (group
+       ;; Subgroup collecting these "special special" buffers
+       ;; separately for convenience.
+       (name-match "**Special**"
+		   (rx bos "*" (or "Messages" "Warnings" "scratch" "Backtrace") "*")))
+      (group
+       ;; Subgroup collecting all other Magit buffers, grouped by directory.
+       (mode-match "*Magit* (non-status)" (rx bos (or "magit" "forge") "-"))
+       (auto-directory))
+      ;; Subgroup for Helm buffers.
+      (mode-match "*Helm*" (rx bos "helm-"))
+      ;; Remaining special buffers are grouped automatically by mode.
+      (auto-mode))
+     ;; All buffers under "~/.emacs.d" (or wherever it is).
+     (dir user-emacs-directory)
+     (group
+      ;; Subgroup collecting buffers in `org-directory' (or "~/org" if
+      ;; `org-directory' is not yet defined).
+      (dir (if (bound-and-true-p org-directory)
+	       org-directory
+	     "~/org"))
+      (group
+       ;; Subgroup collecting indirect Org buffers, grouping them by file.
+       ;; This is very useful when used with `org-tree-to-indirect-buffer'.
+       (auto-indirect)
+       (auto-file))
+      ;; Group remaining buffers by whether they're file backed, then by mode.
+      (group-not "*special*" (auto-file))
+      (auto-mode))
+     (group
+      ;; Subgroup collecting buffers in a projectile project.
+      (auto-projectile))
+     (group
+      ;; Subgroup collecting buffers in a version-control project,
+      ;; grouping them by directory.
+      (auto-project))
+     ;; Group remaining buffers by directory, then major mode.
+     (auto-directory)
+     (auto-mode)))
+#+END_SRC
+
+** Some Musings on Emacs Window Layouts
+The following discussion exceeds the needs of documenting Perspective, but it
+falls in the category of helping users learn to manage Emacs sessions, and
+therefore will likely help potential users of Perspective make the experience
+smoother.
+
+Emacs has bad default behavior when it comes to window handling: many commands
+and modes have a habit of splitting existing windows and changing the user's
+carefully thought-out window layout. This tends to be a more serious problem for
+people who run Emacs on large displays (possibly in full-screen mode): the
+greater amount of screen real estate makes it easy to split the frame into many
+smaller windows, making any unexpected alterations more disruptive.
+
+As a result of indiscriminate-seeming window splits and buffer switching in
+existing windows, new Emacs users can get into the habit of expecting Emacs and
+its packages to lack basic respect for their layouts. Hence the popularity of
+things like `winner-mode`, and packages like
+[shackle](https://github.com/wasamasa/shackle).
+
+This may make the value of Perspective seem questionable: why bother with
+carefully preserving window layouts if Emacs just throws them away on a `M-x
+compile`? The answer is to fix the broken defaults. This is fairly easy:
+
+#+BEGIN_SRC emacs-lisp
+  (customize-set-variable 'display-buffer-base-action
+    '((display-buffer-reuse-window display-buffer-same-window)
+      (reusable-frames . t)))
+
+  (customize-set-variable 'even-window-sizes nil)     ; avoid resizing
+#+END_SRC
+
+These settings do the following:
+
+1. Tell `display-buffer` to reuse existing windows as much as possible,
+   including in other frames. For example, if there is already a `*compilation*`
+   buffer in a visible window, switch to that window. This means that Emacs will
+   usually switch windows in a "do what I mean" manner for a warmed-up workflow
+   (one with, say, a couple of source windows, a compilation output window, and
+   a Magit window).
+2. Prevent splits by telling `display-buffer` to switch to the target buffer in
+   the _current_ window. For example, if there is no `*compilation*` buffer
+   visible, then the buffer in whichever window was current when `compile` was
+   run will be replaced with `*compilation*`. This may seem intrusive, since it
+   changes out the current buffer, but keep in mind that most buffers popped up
+   in this manner are easy to dismiss, either with a dedicated keybinding (often
+   `q`) or the universally-applicable `kill-buffer`. This is easier than
+   restoring window arrangements. It is also easier to handle for pre-arranged
+   window layouts, since the appropriate command can simply be run in a window
+   prepared for it in advance. (If this is a step too far, then replace
+   `display-buffer-same-window` with `display-buffer-pop-up-window`.)
 
 * Evil
 At some point I got used to =vim= keybindings.
