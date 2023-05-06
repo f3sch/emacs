@@ -2327,8 +2327,7 @@ Hence, I add it as a safe pair, with =+tangle-config= function, to the
 =safe-local-variable-values= variable.
 
 #+BEGIN_SRC emacs-lisp
-  (add-to-list 'safe-local-variable-values '(after-save-hook
-  . +tangle-config))
+  (add-to-list 'safe-local-variable-values '(after-save-hook . +tangle-config))
 #+END_SRC
 
 Installs a file local hook, to tangle this file.
