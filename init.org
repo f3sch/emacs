@@ -2125,7 +2125,7 @@ Giving parenthesis some brains.
 
     (setq mu4e-bookmarks
 	  '((:name "Inbox - CERN" :query "maildir:/cern/INBOX" :key ?c)
-	    (:name "Inbox - Git" :query "maildir:/git/INBOX AND NOT list:emacs-devel.gnu.org AND NOT list:help-gnu-emacs.gnu.org AND NOT to:doomemacs@noreply.github.com AND NOT to:AliceO2@noreply.github.com" :key ?g)
+	    (:name "Inbox - Git" :query "maildir:/git/INBOX AND NOT AND NOT list:bug-gnu-emacs.gnu.org AND NOT list:emacs-devel.gnu.org AND NOT list:help-gnu-emacs.gnu.org AND NOT to:doomemacs@noreply.github.com AND NOT to:AliceO2@noreply.github.com" :key ?g)
 	    (:name "Inbox - Web" :query "maildir:/web/INBOX or maildir:/web/Unerw&APw-nscht" :key ?w)
 	    (:name "Inbox - Uni" :query "maildir:/uni/INBOX" :key ?u)
 	    (:name "Unread Messages" :query "flag:unread AND NOT flag:thrashed" :key ?U)
