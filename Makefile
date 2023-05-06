@@ -3,18 +3,17 @@
 SHELL = /bin/sh
 EMACS ?= emacs
 RM = @rm -rf
-EMACS_BATCH_OPTS = -batch -Q
+EMACS_BATCH_OPTS = --batch -Q -nw
 EMACS_BATCH = $(EMACS) $(EMACS_BATCH_OPTS)
 
 .PHONY: test clean spellcheck compile install
 
 
-all: init.el startup
+all: init.el
 
 # Generate lisp and compile it
 init.el: init.org clean-init
 	@$(EMACS_BATCH) \
-		--eval "(require 'org)" \
 		--eval "(org-babel-load-file \"init.org\")"
 	@chmod ugo-w $@
 
