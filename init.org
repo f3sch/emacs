@@ -437,6 +437,30 @@ Embrace the daemon.
       revert-without-query (list ".")))
 #+END_SRC
 
+** Visible Bell
+The first visual setting in this section will activate the visible bell. What it
+does is I get a visual feedback each time I do something Emacs doesn’t agree
+with, like tring to go up a line when I’m already at the top of the buffer.
+
+#+BEGIN_SRC emacs-lisp
+  (setq visible-bell t)
+#+END_SRC
+
+** Cursor
+It is nicer to see a cursor cover the actual space of a character.
+
+#+BEGIN_SRC emacs-lisp
+  (setq x-stretch-cursor t)
+#+END_SRC
+
+** Ellipsed Text
+When text is ellipsed, I want the ellipsis marker to be a single character of
+three dots. Let’s make it so:
+
+#+BEGIN_SRC emacs-lisp
+  (with-eval-after-load 'mule-util
+    (setq truncate-string-ellipsis "…"))
+#+END_SRC
 
 ** Formatting
 #+BEGIN_SRC emacs-lisp
