@@ -1634,6 +1634,8 @@ independent components.
     ;; Configure other variables and modes in the :config section,
     ;; after lazily loading the package.
     :config
+    (consult-customize consult--source-buffer :hidden t :default nil)
+    (add-to-list 'consult-buffer-sources persp-consult-source)
 
     (consult-customize
      consult-theme
