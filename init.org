@@ -1702,6 +1702,13 @@ locations. The =default-directory= variable is not changed in the process.
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 #+END_SRC
 
+*** embark-consult
+#+BEGIN_SRC emacs-lisp
+  (use-package embark-consult
+    :hook
+    (embark-collect-mode . consult-preview-at-point-mode))
+#+END_SRC
+
 ** Corfu
 [[https://github.com/minad/corfu][corfu]] enhances completion at point with a small completion popup. The current
 candidates are shown in a popup below or above the point. Corfu is the
