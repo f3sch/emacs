@@ -2416,6 +2416,23 @@ Giving parenthesis some brains.
     :hook (gnus-part-display . message-view-patch-highlight))
 #+END_SRC
 
+** Alerts
+There is also a package for mu4e which generates desktop notifications when new
+emails are received. By default, I want to be notified by all messages in my
+inbox and junk folder. Also, I’ll use Emacs’ default notification system, and
+I’ll activate the modeline notification.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package mu4e-alert
+    :after mu4e
+    :init
+    (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
+    (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display)
+    (mu4e-alert-set-default-style 'notifications)
+    :config
+    (setq mu4e-alert-interesting-mail-query "flag:unread"))
+#+END_SRC
+
 * EPG
 #+BEGIN_SRC emacs-lisp
   (require 'epg-config)                           ; for mu4e
