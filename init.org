@@ -888,8 +888,16 @@ Nice visual features.
 #+BEGIN_SRC emacs-lisp
   (use-package eldoc
     :straight (eldoc :type built-in)
+    :preface
+    (add-to-list 'display-buffer-alist
+                 '("^\\*eldoc for" display-buffer-at-bottom
+                   (window-height . 4)))
+    :custom
+    (eldoc-idle-delay 0.1)
+    (eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly)
     :config
-    (setq eldoc-idle-delay 0.0)
+    (eldoc-add-command-completions "paredit-")
+    (eldoc-add-command-completions "combobulate-")
     :init
     (global-eldoc-mode))
 #+END_SRC
