@@ -837,6 +837,11 @@ the shell. Let's fix that:
   (exec-path-from-shell-initialize))
 #+END_SRC
 
+** SubWord
+#+BEGIN_SRC emacs-lisp
+  (global-subword-mode 1)
+#+END_SRC
+
 ** Icons
 Nice visual features.
 
