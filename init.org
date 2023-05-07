@@ -804,22 +804,11 @@ Use YYYY-MM-DD date format.
 Clean up trailing whitespaces automatically.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package ws-butler
-    :diminish
-    ;; ws-butler normally preserves whitespace in the buffer (but strips it from
-    ;; the written file). While sometimes convenient, this behavior is not
-    ;; intuitive. To the average user it looks like whitespace cleanup is failing,
-    ;; which causes folks to redundantly install their own.
+  (use-package whitespace
+    :straight (:type built-in)
+    :hook (before-save . whitespace-cleanup)
     :custom
-    (ws-butler-keep-whitespace-before-point nil)
-    :init
-    (ws-butler-global-mode +1))
-#+END_SRC
-
-This should not be possible but if ws-butler fails show it.
-
-#+BEGIN_SRC emacs-lisp
-(setq show-trailing-whitespace t)
+    (show-trailing-whitespace t))
 #+END_SRC
 
 ** Auto Minor Mode
