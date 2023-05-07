@@ -1364,6 +1364,7 @@ Now, I cannot go back.
      evilnc-outer-commenter)
     :general
     ([remap comment-line] #'evilnc-comment-or-uncomment-lines)
+    (:keymaps '(normal visual) "gc" #'evilnc-comment-operator))
 #+END_SRC
 
 * Help
