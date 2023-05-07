@@ -12,15 +12,15 @@ Afterward, sensible defaults are renabled.
 #+begin_src emacs-lisp :tangle early-init.el
   (defvar file-name-handler-alist-old file-name-handler-alist)
   (setq file-name-handler-alist nil
-	message-log-max 16384
-	gc-cons-threshold most-positive-fixnum
-	gc-cons-percentage 0.6)
+    message-log-max 16384
+    gc-cons-threshold most-positive-fixnum
+    gc-cons-percentage 0.6)
   (add-hook 'after-init-hook (lambda ()
-			       (setq file-name-handler-alist file-name-handler-alist-old
-				     gc-cons-threshold (* 16 1024 1024)
-				     gc-cons-percentage 0.1)
-			       (garbage-collect))
-	    t)
+                   (setq file-name-handler-alist file-name-handler-alist-old
+                     gc-cons-threshold (* 16 1024 1024)
+                     gc-cons-percentage 0.1)
+                   (garbage-collect))
+        t)
 #+end_src
 
 ** Native Compilation
@@ -29,11 +29,11 @@ Asynchronous compilation and speed, enabled.
 #+begin_src emacs-lisp :tangle early-init.el
   (let ((path (expand-file-name "eln-cache/" user-emacs-directory)))
     (setq native-comp-eln-load-path (list path)
-	  native-compile-target-directory path))
+      native-compile-target-directory path))
   (setq native-comp-async-report-warnings-errors nil ;; Silence compiler warnings as they can be pretty disruptive
-	native-compile-prune-cache t
-	native-comp-speed 2
-	native-comp-deferred-compilation	 nil)  ;; Make native compilation happens asynchronously
+    native-compile-prune-cache t
+    native-comp-speed 2
+    native-comp-deferred-compilation	 nil)  ;; Make native compilation happens asynchronously
 
   (setq load-prefer-newer noninteractive)
 #+end_src
@@ -90,12 +90,12 @@ Although I do not care about startup time, I want to see it.
     (defconst emacs-start-time (current-time))
     (defun report-time-since-load (&optional suffix)
       (message "Loading init...done (%.3fs)%s"
-	       (float-time (time-subtract (current-time) emacs-start-time))
-	       suffix))
+           (float-time (time-subtract (current-time) emacs-start-time))
+           suffix))
 
     (add-hook 'after-init-hook
-	      #'(lambda () (report-time-since-load " [after-init]"))
-	      t)
+          #'(lambda () (report-time-since-load " [after-init]"))
+          t)
 #+end_src
 
 ** Bootstrap straight.el
@@ -104,22 +104,22 @@ For now I use straight.el as a package manager.
 #+begin_src emacs-lisp
     (defvar bootstrap-version)
     (let ((bootstrap-file
-	   (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-	  (bootstrap-version 6))
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 6))
       (unless (file-exists-p bootstrap-file)
-	(with-current-buffer
-	    (url-retrieve-synchronously
-	     "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-	     'silent 'inhibit-cookies)
-	  (goto-char (point-max))
-	  (eval-print-last-sexp)))
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
       (load bootstrap-file nil 'nomessage))
     (setq straight-use-package-by-default t)
 
       ;;; Paths
     (setq package-user-dir (expand-file-name "packages" user-emacs-directory)
-	  url-history-file (expand-file-name "url/history" user-emacs-directory)
-	  custom-file (expand-file-name "custom.el" user-emacs-directory))
+      url-history-file (expand-file-name "url/history" user-emacs-directory)
+      custom-file (expand-file-name "custom.el" user-emacs-directory))
 
 
     (use-package diminish)
@@ -152,24 +152,24 @@ Mostly taken from doomemacs.
       Unlike `setopt', this won't needlessly pull in dependencies."
     (macroexp-progn
      (cl-loop for (var val) on settings by 'cddr
-	      collect `(funcall (or (get ',var 'custom-set) #'set-default-toplevel-value)
-				',var ,val))))
+          collect `(funcall (or (get ',var 'custom-set) #'set-default-toplevel-value)
+                ',var ,val))))
 
   (defmacro delq! (elt list &optional fetcher)
     "`delq' ELT from LIST in-place.
 
       If FETCHER is a function, ELT is used as the key in LIST (an alist)."
     `(setq ,list (delq ,(if fetcher
-			    `(funcall ,fetcher ,elt ,list)
-			  elt)
-		       ,list)))
+                `(funcall ,fetcher ,elt ,list)
+              elt)
+               ,list)))
 
   (defmacro pushnew! (place &rest values)
     "Push VALUES sequentially into PLACE, if they aren't already present.
       This is a variadic `cl-pushnew'."
     (let ((var (make-symbol "result")))
       `(dolist (,var (list ,@values) (with-no-warnings ,place))
-	 (cl-pushnew ,var ,place :test #'equal))))
+     (cl-pushnew ,var ,place :test #'equal))))
 
   (defmacro prependq! (sym &rest lists)
     "Prepend LISTS to SYM in place."
@@ -183,26 +183,26 @@ Mostly taken from doomemacs.
     (declare (indent defun) (doc-string 1) (pure t) (side-effect-free t))
     `(cl-function
       (lambda
-	,(letf! (defun* allow-other-keys (args)
-		  (mapcar
-		   (lambda (arg)
-		     (cond ((nlistp (cdr-safe arg)) arg)
-			   ((listp arg) (allow-other-keys arg))
-			   (arg)))
-		   (if (and (memq '&key args)
-			    (not (memq '&allow-other-keys args)))
-		       (if (memq '&aux args)
-			   (let (newargs arg)
-			     (while args
-			       (setq arg (pop args))
-			       (when (eq arg '&aux)
-				 (push '&allow-other-keys newargs))
-			       (push arg newargs))
-			     (nreverse newargs))
-			 (append args (list '&allow-other-keys)))
-		     args)))
-	   (allow-other-keys arglist))
-	,@body)))
+    ,(letf! (defun* allow-other-keys (args)
+          (mapcar
+           (lambda (arg)
+             (cond ((nlistp (cdr-safe arg)) arg)
+               ((listp arg) (allow-other-keys arg))
+               (arg)))
+           (if (and (memq '&key args)
+                (not (memq '&allow-other-keys args)))
+               (if (memq '&aux args)
+               (let (newargs arg)
+                 (while args
+                   (setq arg (pop args))
+                   (when (eq arg '&aux)
+                 (push '&allow-other-keys newargs))
+                   (push arg newargs))
+                 (nreverse newargs))
+             (append args (list '&allow-other-keys)))
+             args)))
+       (allow-other-keys arglist))
+    ,@body)))
 
   (defmacro letf! (bindings &rest body)
     "Temporarily rebind function, macros, and advice in BODY.
@@ -232,24 +232,24 @@ Mostly taken from doomemacs.
       (setq bindings (list bindings)))
     (dolist (binding (reverse bindings) body)
       (let ((type (car binding))
-	    (rest (cdr binding)))
-	(setq
-	 body (pcase type
-		(`defmacro `(cl-macrolet ((,@rest)) ,body))
-		(`defadvice `(progn (defadvice! ,@rest)
-				    (unwind-protect ,body (undefadvice! ,@rest))))
-		((or `defun `defun*)
-		 `(cl-letf ((,(car rest) (symbol-function #',(car rest))))
-		    (ignore ,(car rest))
-		    ,(if (eq type 'defun*)
-			 `(cl-labels ((,@rest)) ,body)
-		       `(cl-letf (((symbol-function #',(car rest))
-				   (lambda! ,(cadr rest) ,@(cddr rest))))
-			  ,body))))
-		(_
-		 (when (eq (car-safe type) 'function)
-		   (setq type (list 'symbol-function type)))
-		 (list 'cl-letf (list (cons type rest)) body)))))))
+        (rest (cdr binding)))
+    (setq
+     body (pcase type
+        (`defmacro `(cl-macrolet ((,@rest)) ,body))
+        (`defadvice `(progn (defadvice! ,@rest)
+                    (unwind-protect ,body (undefadvice! ,@rest))))
+        ((or `defun `defun*)
+         `(cl-letf ((,(car rest) (symbol-function #',(car rest))))
+            (ignore ,(car rest))
+            ,(if (eq type 'defun*)
+             `(cl-labels ((,@rest)) ,body)
+               `(cl-letf (((symbol-function #',(car rest))
+                   (lambda! ,(cadr rest) ,@(cddr rest))))
+              ,body))))
+        (_
+         (when (eq (car-safe type) 'function)
+           (setq type (list 'symbol-function type)))
+         (list 'cl-letf (list (cons type rest)) body)))))))
 
 
   (defmacro quiet! (&rest forms)
@@ -259,19 +259,19 @@ Mostly taken from doomemacs.
     writes to `standard-output'. In interactive sessions this inhibits output to the
     echo-area, but not to *Messages*."
     `(if init-file-debug
-	 (progn ,@forms)
+     (progn ,@forms)
        ,(if noninteractive
-	    `(letf! ((standard-output (lambda (&rest _)))
-		     (defun message (&rest _))
-		     (defun load (file &optional noerror nomessage nosuffix must-suffix)
-		       (funcall load file noerror t nosuffix must-suffix))
-		     (defun write-region (start end filename &optional append visit lockname mustbenew)
-		       (unless visit (setq visit 'no-message))
-		       (funcall write-region start end filename append visit lockname mustbenew)))
-		    ,@forms)
-	  `(let ((inhibit-message t)
-		 (save-silently t))
-	     (prog1 ,@forms (message ""))))))
+        `(letf! ((standard-output (lambda (&rest _)))
+             (defun message (&rest _))
+             (defun load (file &optional noerror nomessage nosuffix must-suffix)
+               (funcall load file noerror t nosuffix must-suffix))
+             (defun write-region (start end filename &optional append visit lockname mustbenew)
+               (unless visit (setq visit 'no-message))
+               (funcall write-region start end filename append visit lockname mustbenew)))
+            ,@forms)
+      `(let ((inhibit-message t)
+         (save-silently t))
+         (prog1 ,@forms (message ""))))))
 
 
   (defun doom-shut-up-a (fn &rest args)
@@ -302,12 +302,12 @@ Stop emacs from littering with sensible defaults to paths.
     :config
     ;; save auto-save file if needed
     (setq auto-save-file-name-transforms
-	  `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
 
     ;; exclude these in recentf
     (with-eval-after-load 'recentf
       (appendq! recentf-exclude
-		`(,no-littering-var-directory ,no-littering-etc-directory))))
+        `(,no-littering-var-directory ,no-littering-etc-directory))))
 #+END_SRC
 
 ** Backups
@@ -319,7 +319,7 @@ dedicated directory.
 (setq backup-directory-alist '(("." . "~/.cache/emacs/backups")))
 (with-eval-after-load 'tramp
   (add-to-list 'tramp-backup-directory-alist
-	       (cons tramp-file-name-regexp nil)))
+           (cons tramp-file-name-regexp nil)))
 (setq delete-old-versions t)
 ;; Backup also files under VC.
 (setq version-control t
@@ -350,7 +350,7 @@ I do not need to know when it does...
        "\\.?ido\\.last$" "\\.revive$" "/G?TAGS$" "/.elfeed/"
        "^/tmp/" "^/var/folders/.+$" "^/ssh:" "/persp-confs/"
        (concat "^" (regexp-quote (or (getenv "XDG_RUNTIME_DIR")
-				     "/run")))
+                     "/run")))
        (lambda (file) (file-in-directory-p file package-user-dir))))
     :config
 
@@ -392,9 +392,9 @@ Let smarter people than me think about GC.
     (gcmh-idle-delay 'auto)
     ;; Garbage-collect on focus-out
     (add-function :after after-focus-change-function
-		  (defun +garbage-collect-maybe ()
-		    (unless (frame-focus-state)
-		      (garbage-collect)))))
+          (defun +garbage-collect-maybe ()
+            (unless (frame-focus-state)
+              (garbage-collect)))))
 #+END_SRC
 
 ** Save Place
@@ -431,10 +431,10 @@ Embrace the daemon.
     :hook (after-init . global-auto-revert-mode)
     :config
     (setq auto-revert-verbose t ; let us know when it happens
-	  auto-revert-use-notify nil
-	  auto-revert-stop-on-user-input nil
-	  ;; Only prompts for confirmation when buffer is unsaved.
-	  revert-without-query (list ".")))
+      auto-revert-use-notify nil
+      auto-revert-stop-on-user-input nil
+      ;; Only prompts for confirmation when buffer is unsaved.
+      revert-without-query (list ".")))
 #+END_SRC
 
 
@@ -444,7 +444,7 @@ Embrace the daemon.
   ;; more consistent default than 8-space tabs. It can be changed on a per-mode
   ;; basis anyway (and is, where tabs are the canonical style, like go-mode).
   (setq-default indent-tabs-mode nil
-		tab-width 4)
+        tab-width 4)
 
   ;; Only indent the line when at BOL or in a line's indentation. Anywhere else,
   ;; insert literal indentation.
@@ -491,8 +491,8 @@ For better clipboard integration in Linux.
 
 #+BEGIN_SRC emacs-lisp
   (setq select-enable-clipboard t
-	select-enable-primary t
-	save-interprogram-paste-before-kill t)
+    select-enable-primary t
+    save-interprogram-paste-before-kill t)
 #+END_SRC
 
 ** CJK Encoding
@@ -533,7 +533,7 @@ Keep text somewhat centered.
 
 #+BEGIN_SRC emacs-lisp
   (setq scroll-margin 5
-	scroll-step 1)
+    scroll-step 1)
 #+END_SRC
 
 Emacs spends too much effort re-centering the screen if you scroll the cursor
@@ -579,7 +579,7 @@ rather than tall.
 
 #+BEGIN_SRC emacs-lisp
   (setq split-width-threshold 160
-	split-height-threshold nil)
+    split-height-threshold nil)
 #+END_SRC
 
 ** Minibuffer
@@ -652,8 +652,8 @@ And finally, the prompt that asks you if you want to kill a buffer with a live p
 
 #+BEGIN_SRC emacs-lisp
   (setq kill-buffer-query-functions
-	(remq 'process-kill-buffer-query-function
-	      kill-buffer-query-functions))
+    (remq 'process-kill-buffer-query-function
+          kill-buffer-query-functions))
 #+END_SRC
 
 ** Scripts
@@ -674,7 +674,7 @@ CAsE is dump, ignore.
 
 #+BEGIN_SRC emacs-lisp
   (setq read-buffer-completion-ignore-case t
-	read-file-name-completion-ignore-case t)
+    read-file-name-completion-ignore-case t)
 #+END_SRC
 
 ** History
@@ -693,10 +693,10 @@ Persistent History, have some persistency.
     :hook (after-init . savehist-mode)
     :custom
     (savehist-additional-variables '(mark-ring global-mark-ring
-					       search-ring regexp-search-ring
-					       register-alist
-					       kill-ring
-					       extended-command-history))
+                           search-ring regexp-search-ring
+                           register-alist
+                           kill-ring
+                           extended-command-history))
     (savehist-autosave-interval 300))
 #+END_SRC
 
@@ -758,29 +758,29 @@ Tail the messages buffer when not in focus.
   (defun +messages--auto-tail-a (&rest arg)
     "Make *Messages* buffer auto-scroll to the end after each message. ARG."
     (let* ((buf-name (buffer-name (messages-buffer)))
-	   ;; Create *Messages* buffer if it does not exist
-	   (buf (get-buffer-create buf-name)))
+       ;; Create *Messages* buffer if it does not exist
+       (buf (get-buffer-create buf-name)))
       ;; Activate this advice only if the point is _not_ in the *Messages* buffer
       ;; to begin with. This condition is required; otherwise you will not be
       ;; able to use `isearch' and other stuff within the *Messages* buffer as
       ;; the point will keep moving to the end of buffer :P
       (when (not (string= buf-name (buffer-name)))
-	;; Go to the end of buffer in all *Messages* buffer windows that are
-	;; *live* (`get-buffer-window-list' returns a list of only live windows).
-	(dolist (win (get-buffer-window-list buf-name nil :all-frames))
-	  (with-selected-window win
-	    (goto-char (point-max))))
-	;; Go to the end of the *Messages* buffer even if it is not in one of
-	;; the live windows.
-	(with-current-buffer buf
-	  (goto-char (point-max))))))
+    ;; Go to the end of buffer in all *Messages* buffer windows that are
+    ;; *live* (`get-buffer-window-list' returns a list of only live windows).
+    (dolist (win (get-buffer-window-list buf-name nil :all-frames))
+      (with-selected-window win
+        (goto-char (point-max))))
+    ;; Go to the end of the *Messages* buffer even if it is not in one of
+    ;; the live windows.
+    (with-current-buffer buf
+      (goto-char (point-max))))))
   (defun +messages-auto-tail-toggle ()
     "Auto tail the '*Messages*' buffer."
     (interactive)
     (if +messages--auto-tail-enabled
-	(progn
-	  (advice-remove 'message '+messages--auto-tail-a)
-	  (setq +messages--auto-tail-enabled nil))
+    (progn
+      (advice-remove 'message '+messages--auto-tail-a)
+      (setq +messages--auto-tail-enabled nil))
       (advice-add 'message :after '+messages--auto-tail-a)
       (setq +messages--auto-tail-enabled t)))
   (+messages-auto-tail-toggle)
@@ -855,11 +855,11 @@ Nice visual features.
 (use-package all-the-icons
   :if (display-graphic-p)
   :commands (all-the-icons-octicon
-	     all-the-icons-faicon
-	     all-the-icons-fileicon
-	     all-the-icons-wicon
-	     all-the-icons-material
-	     all-the-icons-alltheicon))
+         all-the-icons-faicon
+         all-the-icons-fileicon
+         all-the-icons-wicon
+         all-the-icons-material
+         all-the-icons-alltheicon))
 
 (use-package all-the-icons-dired
   :if (display-graphic-p)
@@ -1086,7 +1086,7 @@ Nice visual features.
     :config
     ;; Global settings (defaults)
     (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-	  doom-themes-enable-italic t) ; if nil, italics is universally disabled
+      doom-themes-enable-italic t) ; if nil, italics is universally disabled
     (load-theme 'doom-one t)
 
     ;; Enable flashing mode-line on errors
@@ -1205,25 +1205,25 @@ Define leader keys.
      (group
       ;; Subgroup collecting all `help-mode' and `info-mode' buffers.
       (group-or "*Help/Info*"
-		(mode-match "*Help*" (rx bos "help-"))
-		(mode-match "*Info*" (rx bos "info-"))))
+        (mode-match "*Help*" (rx bos "help-"))
+        (mode-match "*Info*" (rx bos "info-"))))
      (group
       ;; Subgroup collecting all special buffers (i.e. ones that are not
       ;; file-backed), except `magit-status-mode' buffers (which are allowed to fall
       ;; through to other groups, so they end up grouped with their project buffers).
       (group-and "*Special*"
-		 (lambda (buffer)
-		   (unless (or (funcall (mode-match "Magit" (rx bos "magit-status"))
-					buffer)
-			       (funcall (mode-match "Dired" (rx bos "dired"))
-					buffer)
-			       (funcall (auto-file) buffer))
-		     "*Special*")))
+         (lambda (buffer)
+           (unless (or (funcall (mode-match "Magit" (rx bos "magit-status"))
+                    buffer)
+                   (funcall (mode-match "Dired" (rx bos "dired"))
+                    buffer)
+                   (funcall (auto-file) buffer))
+             "*Special*")))
       (group
        ;; Subgroup collecting these "special special" buffers
        ;; separately for convenience.
        (name-match "**Special**"
-		   (rx bos "*" (or "Messages" "Warnings" "scratch" "Backtrace") "*")))
+           (rx bos "*" (or "Messages" "Warnings" "scratch" "Backtrace") "*")))
       (group
        ;; Subgroup collecting all other Magit buffers, grouped by directory.
        (mode-match "*Magit* (non-status)" (rx bos (or "magit" "forge") "-"))
@@ -1238,8 +1238,8 @@ Define leader keys.
       ;; Subgroup collecting buffers in `org-directory' (or "~/org" if
       ;; `org-directory' is not yet defined).
       (dir (if (bound-and-true-p org-directory)
-	       org-directory
-	     "~/org"))
+           org-directory
+         "~/org"))
       (group
        ;; Subgroup collecting indirect Org buffers, grouping them by file.
        ;; This is very useful when used with `org-tree-to-indirect-buffer'.
@@ -1369,7 +1369,7 @@ Now, I cannot go back.
      evilnc-inner-comment
      evilnc-outer-commenter)
     :general
-    ([remap comment-line] #'evilnc-comment-or-uncomment-lines))
+    ([remap comment-line] #'evilnc-comment-or-uncomment-lines)
 #+END_SRC
 
 * Help
@@ -1427,7 +1427,7 @@ Help me.
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles . (partial-completion)))
-				   (eglot (styles . (orderless))))))
+                   (eglot (styles . (orderless))))))
 #+END_SRC
 
 *** Dabbrev
@@ -1475,9 +1475,9 @@ Provide minibuffer annotations.
     :config
     ;; Hide the mode line of the Embark live/completions buffers
     (add-to-list 'display-buffer-alist
-		 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-		   nil
-		   (window-parameters (mode-line-format . none)))))
+         '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+           nil
+           (window-parameters (mode-line-format . none)))))
 #+END_SRC
 
 ** Vertico
@@ -1490,14 +1490,14 @@ For minibuffer completions.
     :init
     (vertico-mode)
     :straight (vertico :files (:defaults "extensions/*")
-		       :includes (vertico-multiform))
+               :includes (vertico-multiform))
     :bind
     (:map vertico-map
-	  ("C-j" . vertico-next)
-	  ("C-k" . vertico-previous)
-	  ("C-f" . vertico-exit)
-	  :map minibuffer-local-map
-	  ("M-h" . backward-kill-word))
+      ("C-j" . vertico-next)
+      ("C-k" . vertico-previous)
+      ("C-f" . vertico-exit)
+      :map minibuffer-local-map
+      ("M-h" . backward-kill-word))
     :custom
     (vertico-cycle t)
     (vertico-count 10)
@@ -1531,56 +1531,57 @@ independent components.
   (use-package consult
     :straight (consult :type git :host github :repo "minad/consult")
     :bind (("C-c M-x" . consult-mode-command)
-	   ("C-c h"   . consult-history)
-	   ("C-c K"   . consult-kmacro)
-	   ("C-c i"   . consult-info)
-	   ([remap Info-search] . consult-info)
+       ("C-c h"   . consult-history)
+       ("C-c K"   . consult-kmacro)
+       ("C-c i"   . consult-info)
+       ([remap Info-search] . consult-info)
 
-	   ("C-*"     . consult-org-heading)
-	   ("C-c e l" . find-library)
-	   ("C-c e q" . set-variable)
-	   ("C-c p f" . project-find-file)
+       ("C-*"     . consult-org-heading)
+       ("C-c e l" . find-library)
+       ("C-c e q" . set-variable)
+       ("C-c p f" . project-find-file)
 
-	   ;; C-x bindings (ctl-x-map)
-	   ("C-x M-:" . consult-complex-command)
-	   ("C-x b"   . consult-buffer)
-	   ("C-x 4 b" . consult-buffer-other-window)
-	   ("C-x 5 b" . consult-buffer-other-frame)
-	   ("C-x r b" . consult-bookmark)
-	   ("C-x p b" . consult-project-buffer)
-	   ;; Other custom bindings
-	   ("M-y"     . consult-yank-pop)
-	   ;; M-g bindings (goto-map)
-	   ("M-g e"   . consult-compile-error)
-	   ("M-g g"   . consult-goto-line)
-	   ("M-g M-g" . consult-goto-line)
-	   ("M-g l"   . consult-goto-line)
-	   ([remap goto-line] . consult-goto-line)
-	   ("M-g o"   . consult-org-heading)
-	   ("M-g m"   . consult-mark)
-	   ("M-g k"   . consult-global-mark)
-	   ("M-g i"   . consult-imenu)
-	   ("M-g I"   . consult-imenu-multi)
-	   ;; M-s bindings (search-map)
-	   ("M-s f"   . consult-find)
-	   ("M-s M-g" . consult-grep)
-	   ("M-s g"   . consult-git-grep)
-	   ("M-s r"   . consult-ripgrep)
-	   ("M-s l"   . consult-line)
-	   ("M-s L"   . consult-line-multi)
-	   ("M-s k"   . consult-keep-lines)
-	   ("M-s u"   . consult-focus-lines)
-	   ;; Isearch integration
-	   ("M-s e"   . consult-isearch-history)
-	   :map isearch-mode-map
-	   ("M-e"     . consult-isearch-history)
-	   ("M-s e"   . consult-isearch-history)
-	   ("M-s l"   . consult-line)
-	   ("M-s L"   . consult-line-multi)
-	   ;; Minibuffer history
-	   :map minibuffer-local-map
-	   ("M-s"     . consult-history)
-	   ("M-r"     . consult-history))
+       ;; C-x bindings (ctl-x-map)
+       ("C-x M-:" . consult-complex-command)
+       ("C-x b"   . consult-project-buffer)
+       ("C-x B"   . consult-buffer)
+       ("C-x 4 b" . consult-buffer-other-window)
+       ("C-x 5 b" . consult-buffer-other-frame)
+       ("C-x r b" . consult-bookmark)
+       ("C-x p b" . consult-project-buffer)
+       ;; Other custom bindings
+       ("M-y"     . consult-yank-pop)
+       ;; M-g bindings (goto-map)
+       ("M-g e"   . consult-compile-error)
+       ("M-g g"   . consult-goto-line)
+       ("M-g M-g" . consult-goto-line)
+       ("M-g l"   . consult-goto-line)
+       ([remap goto-line] . consult-goto-line)
+       ("M-g o"   . consult-org-heading)
+       ("M-g m"   . consult-mark)
+       ("M-g k"   . consult-global-mark)
+       ("M-g i"   . consult-imenu)
+       ("M-g I"   . consult-imenu-multi)
+       ;; M-s bindings (search-map)
+       ("M-s f"   . consult-find)
+       ("M-s M-g" . consult-grep)
+       ("M-s g"   . consult-git-grep)
+       ("M-s r"   . consult-ripgrep)
+       ("M-s l"   . consult-line)
+       ("M-s L"   . consult-line-multi)
+       ("M-s k"   . consult-keep-lines)
+       ("M-s u"   . consult-focus-lines)
+       ;; Isearch integration
+       ("M-s e"   . consult-isearch-history)
+       :map isearch-mode-map
+       ("M-e"     . consult-isearch-history)
+       ("M-s e"   . consult-isearch-history)
+       ("M-s l"   . consult-line)
+       ("M-s L"   . consult-line-multi)
+       ;; Minibuffer history
+       :map minibuffer-local-map
+       ("M-s"     . consult-history)
+       ("M-r"     . consult-history))
 
     ;; Enable automatic preview at point in the *Completions* buffer. This is
     ;; relevant when you use the default completion UI.
@@ -1611,7 +1612,7 @@ independent components.
     ;; preview for `consult-register', `consult-register-load',
     ;; `consult-register-store' and the Emacs built-ins.
     (setq register-preview-delay 0.5
-	  register-preview-function #'consult-register-format)
+      register-preview-function #'consult-register-format)
 
     ;; Optionally tweak the register preview window.
     ;; This adds thin lines, sorting and hides the mode line of the window.
@@ -1619,7 +1620,7 @@ independent components.
 
     ;; Use Consult to select xref locations with preview
     (setq xref-show-xrefs-function #'consult-xref
-	  xref-show-definitions-function #'consult-xref)
+      xref-show-definitions-function #'consult-xref)
 
     ;; Configure other variables and modes in the :config section,
     ;; after lazily loading the package.
@@ -1666,9 +1667,9 @@ locations. The =default-directory= variable is not changed in the process.
 #+begin_src emacs-lisp
   (use-package consult-dir
     :bind (("M-g d"   . consult-dir)
-	   :map minibuffer-local-completion-map
-	   ("M-s f" . consult-dir-jump-file)
-	   ("M-g d" . consult-dir)))
+       :map minibuffer-local-completion-map
+       ("M-s f" . consult-dir-jump-file)
+       ("M-g d" . consult-dir)))
 #+end_src
 
 *** consult-flycheck
@@ -1730,19 +1731,19 @@ provides an alternative overlay-based display.
 #+begin_src emacs-lisp
   (use-package corfu
     :straight (corfu :type git :host github :repo "minad/corfu"
-		     :files (:defaults "extensions/*")
-		     :includes (corfu-history
-				corfu-popupinfo))
+             :files (:defaults "extensions/*")
+             :includes (corfu-history
+                corfu-popupinfo))
     :demand t
     :bind (("M-/" . completion-at-point)
-	   :map corfu-map
-	   ("C-n"      . corfu-next)
-	   ("C-p"      . corfu-previous)
-	   ("<escape>" . corfu-quit)
-	   ("<return>" . corfu-insert)
-	   ("M-d"      . corfu-info-documentation)
-	   ("M-l"      . corfu-info-location)
-	   ("M-."      . corfu-move-to-minibuffer))
+       :map corfu-map
+       ("C-n"      . corfu-next)
+       ("C-p"      . corfu-previous)
+       ("<escape>" . corfu-quit)
+       ("<return>" . corfu-insert)
+       ("M-d"      . corfu-info-documentation)
+       ("M-l"      . corfu-info-location)
+       ("M-."      . corfu-move-to-minibuffer))
     :custom
     ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
     ;; want to perform completion
@@ -1780,24 +1781,24 @@ provides an alternative overlay-based display.
     (defun corfu-enable-always-in-minibuffer ()
       "Enable Corfu in the minibuffer if Vertico/Mct are not active."
       (unless (or (bound-and-true-p mct--active) ; Useful if I ever use MCT
-		  (bound-and-true-p vertico--input))
-	(setq-local corfu-auto nil)       ; Ensure auto completion is disabled
-	(corfu-mode 1)))
+          (bound-and-true-p vertico--input))
+    (setq-local corfu-auto nil)       ; Ensure auto completion is disabled
+    (corfu-mode 1)))
 
     (defun corfu-move-to-minibuffer ()
       (interactive)
       (let (completion-cycle-threshold completion-cycling)
-	(apply #'consult-completion-in-region completion-in-region--data)))
+    (apply #'consult-completion-in-region completion-in-region--data)))
     :config
     (global-corfu-mode)
     (corfu-history-mode)
 
     ;; In EShell enable some special options.
     (add-hook 'eshell-mode-hook
-	      (lambda () (setq-local corfu-quit-at-boundary t
-				     corfu-quit-no-match t
-				     corfu-auto nil)
-		(corfu-mode)))
+          (lambda () (setq-local corfu-quit-at-boundary t
+                     corfu-quit-no-match t
+                     corfu-auto nil)
+        (corfu-mode)))
 
     ;; Show some information in eldoc.
     (eldoc-add-command #'corfu-insert)
@@ -1914,51 +1915,118 @@ Possibly the most convincing reason to use EMACS? No, seriously it is awesome!
       "Compute diffstat for COMMIT asynchronously, then call CALLBACK with it."
       ;; Kill the possibly still running old process and its buffer.
       (when (processp th/eldoc-git-show-stat--process)
-	(let ((buf (process-buffer th/eldoc-git-show-stat--process)))
-	  (when (process-live-p th/eldoc-git-show-stat--process)
-	    (let (confirm-kill-processes)
-	      (kill-process th/eldoc-git-show-stat--process)))
-	  (when (buffer-live-p buf)
-	    (kill-buffer buf))))
+    (let ((buf (process-buffer th/eldoc-git-show-stat--process)))
+      (when (process-live-p th/eldoc-git-show-stat--process)
+        (let (confirm-kill-processes)
+          (kill-process th/eldoc-git-show-stat--process)))
+      (when (buffer-live-p buf)
+        (kill-buffer buf))))
 
       ;; Spawn a new "git show" process.
       (let* ((cmd (list "git" "--no-pager" "show"
-			"--no-color"
-			;; Author Name <author@email.com>, <date-and-time>
-			"--format=format:%an <%ae>, %aD"
-			"--stat=80"
-			commit)))
-	;; An async eldoc-documentation-function must also return a non-nil,
-	;; non-string result if it's applicable for computing a documentation
-	;; string, so we set and return the new process here.
-	(setq th/eldoc-git-show-stat--process
-	      (make-process
-	       :name "eldoc-git-show"
-	       :buffer (generate-new-buffer " *git-show-stat*")
-	       :noquery t
-	       :command cmd
-	       :sentinel (lambda (proc _event)
-			   (when (eq (process-status proc) 'exit)
-			     (with-current-buffer (process-buffer proc)
-			       (goto-char (point-min))
-			       (put-text-property (point-min)
-						  (line-end-position)
-						  'face 'bold)
-			       (funcall callback (buffer-string)))))))))
+            "--no-color"
+            ;; Author Name <author@email.com>, <date-and-time>
+            "--format=format:%an <%ae>, %aD"
+            "--stat=80"
+            commit)))
+    ;; An async eldoc-documentation-function must also return a non-nil,
+    ;; non-string result if it's applicable for computing a documentation
+    ;; string, so we set and return the new process here.
+    (setq th/eldoc-git-show-stat--process
+          (make-process
+           :name "eldoc-git-show"
+           :buffer (generate-new-buffer " *git-show-stat*")
+           :noquery t
+           :command cmd
+           :sentinel (lambda (proc _event)
+               (when (eq (process-status proc) 'exit)
+                 (with-current-buffer (process-buffer proc)
+                   (goto-char (point-min))
+                   (put-text-property (point-min)
+                          (line-end-position)
+                          'face 'bold)
+                   (funcall callback (buffer-string)))))))))
     (defvar th/magit-eldoc-last-commit nil)
     (defun th/magit-eldoc-for-commit (callback)
       (let ((commit (magit-commit-at-point)))
-	(when (and commit
-		   (not (equal commit th/magit-eldoc-last-commit)))
-	  (setq th/magit-eldoc-last-commit commit)
-	  (th/eldoc-git-show-stat callback commit))))
+    (when (and commit
+           (not (equal commit th/magit-eldoc-last-commit)))
+      (setq th/magit-eldoc-last-commit commit)
+      (th/eldoc-git-show-stat callback commit))))
 
     (defun th/magit-eldoc-setup ()
       (add-hook 'eldoc-documentation-functions
-		#'th/magit-eldoc-for-commit nil t))
+        #'th/magit-eldoc-for-commit nil t))
 
     (add-hook 'magit-status-mode-hook #'th/magit-eldoc-setup)
     (add-hook 'magit-log-mode-hook #'th/magit-eldoc-setup))
+#+END_SRC
+
+*** TODO
+First, let’s se tup our todo keywords with hl-todo. A good few todo keywords are
+already defined in the hl-todo-keyword-faces variable. Why not use them?
+hl-todo-mode enables fontlock highlight of these keywords in a buffer. Let’s
+enable this mode globally.
+
+ #+BEGIN_SRC emacs-lisp
+   (use-package hl-todo
+     :init (global-hl-todo-mode 1)
+     :general
+     (+leader-key
+       :packages '(hl-todo)
+       :infix "T"
+       "" '(:ignore t :wk "TODO")
+       "n" #'hl-todo-next
+       "p" #'hl-todo-previous))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package magit-todos
+    :after (magit hl-todo)
+    :custom
+    (magit-todos-ignore-case t))
+#+END_SRC
+
+*** Gitflow
+Gitflow’s framework with Magit with =magit-gitflow=:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package magit-gitflow
+    :after magit
+    :straight (magit-gitflow :build t
+                             :type git
+                             :host github
+                             :repo "jtatarik/magit-gitflow")
+    :hook (magit-mode . turn-on-magit-gitflow))
+#+END_SRC
+
+*** Forge
+Forge acts as an interface for GitHub, Gitlab, and Bitbucket inside Magit. A lot
+of possibilities are present, you can read issues and pull requests, create
+them, and fork projects among other things.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package forge
+    :after magit
+    :straight (:build t)
+    :init
+    (evil-collection-forge-setup)
+    :general
+    (+local-leader-key
+      :keymaps 'forge-topic-mode-map
+      "c"  #'forge-create-post
+      "e"  '(:ignore t :which-key "edit")
+      "ea" #'forge-edit-topic-assignees
+      "ed" #'forge-edit-topic-draft
+      "ek" #'forge-delete-comment
+      "el" #'forge-edit-topic-labels
+      "em" #'forge-edit-topic-marks
+      "eM" #'forge-merge
+      "en" #'forge-edit-topic-note
+      "ep" #'forge-edit-post
+      "er" #'forge-edit-topic-review-requests
+      "es" #'forge-edit-topic-state
+      "et" #'forge-edit-topic-title))
 #+END_SRC
 
 * Undo
@@ -1977,12 +2045,12 @@ Hence Something visually appealing.
     :config
     (global-undo-tree-mode +1)
     (setq undo-tree-visualizer-diff t
-	  undo-tree-auto-save-history t
-	  undo-tree-visualizer-timestamps t
-	  undo-tree-enable-undo-in-region t
-	  undo-limit 800000           ; 800kb (default is 160kb)
-	  undo-strong-limit 12000000  ; 12mb  (default is 240kb)
-	  undo-outer-limit 128000000)
+          undo-tree-auto-save-history t
+          undo-tree-visualizer-timestamps t
+          undo-tree-enable-undo-in-region t
+          undo-limit 800000           ; 800kb (default is 160kb)
+          undo-strong-limit 12000000  ; 12mb  (default is 240kb)
+          undo-outer-limit 128000000)
     ;; Undo-tree is too chatty about saving its history files. This doesn't
     ;; totally suppress it logging to *Messages*, it only stops it from appearing
     ;; in the echo-area.
@@ -1996,17 +2064,17 @@ Hence Something visually appealing.
   (defun org-insert-src-block (src-code-type)
     "Insert a `SRC-CODE-TYPE' type source code block in org-mode."
     (interactive (let ((src-code-types '("emacs-lisp" "python" "C" "sh" "java" "js"
-					 "clojure" "C++" "css" "calc" "asymptote" "dot" "gnuplot" "ledger"
-					 "lilypond" "mscgen" "octave" "oz" "plantuml" "R" "sass" "screen" "sql"
-					 "awk" "ditaa" "haskell" "latex" "lisp" "matlab" "ocaml" "org" "perl"
-					 "ruby" "scheme" "sqlite")))
-		   (list (ido-completing-read "Source code type: " src-code-types))))
+                     "clojure" "C++" "css" "calc" "asymptote" "dot" "gnuplot" "ledger"
+                     "lilypond" "mscgen" "octave" "oz" "plantuml" "R" "sass" "screen" "sql"
+                     "awk" "ditaa" "haskell" "latex" "lisp" "matlab" "ocaml" "org" "perl"
+                     "ruby" "scheme" "sqlite")))
+           (list (ido-completing-read "Source code type: " src-code-types))))
     (progn (insert (format "#+BEGIN_SRC %s\n" src-code-type))
-	   (insert "#+END_SRC\n") (previous-line 2) (org-edit-src-code)))
+       (insert "#+END_SRC\n") (previous-line 2) (org-edit-src-code)))
 
   (add-hook 'org-mode-hook #'(lambda () ;; keybinding for editing source code blocks
-			       (local-set-key (kbd "C-c i e") 'org-edit-src-code) ;; keybinding for inserting code blocks
-			       (local-set-key (kbd "C-c i s")
+                   (local-set-key (kbd "C-c i e") 'org-edit-src-code) ;; keybinding for inserting code blocks
+                   (local-set-key (kbd "C-c i s")
   'org-insert-src-block)))
 #+END_SRC
 
@@ -2078,6 +2146,28 @@ Giving parenthesis some brains.
       (setq sp-pair-overlay-keymap (make-sparse-keymap))))
 #+END_SRC
 
+** Code
+*** ELisp
+**** Parinfer
+#+BEGIN_SRC emacs-lisp
+  (use-package parinfer-rust-mode
+    :defer t
+    :straight (:build t)
+    :diminish parinfer-rust-mode
+    :hook emacs-lisp-mode common-lisp-mode scheme-mode
+    :init
+    (setq parinfer-rust-auto-download     t
+          parinfer-rust-library-directory (concat user-emacs-directory
+                                                  "parinfer-rust/"))
+    (add-hook 'parinfer-rust-mode-hook
+              (lambda () (smartparens-mode -1)))
+    :general
+    (+local-leader-key
+      :keymaps 'parinfer-rust-mode-map
+      "m" #'parinfer-rust-switch-mode
+      "M" #'parinfer-rust-toggle-disable))
+#+END_SRC
+
 * EMail
 #+BEGIN_SRC emacs-lisp
   (use-package mu4e
@@ -2094,184 +2184,185 @@ Giving parenthesis some brains.
     ;; (better only use that for the last field.
     ;; These are the defaults:
     (setq mu4e-headers-fields
-	  '( (:date          .  25)    ;; alternatively, use :human-date
-	     (:flags         .   6)
-	     (:from          .  22)
-	     (:subject       .  nil))) ;; alternatively, use :thread-subject
+      '( (:date          .  25)    ;; alternatively, use :human-date
+         (:flags         .   6)
+         (:from          .  22)
+         (:subject       .  nil))) ;; alternatively, use :thread-subject
 
     (setq mu4e-headers-auto-update t
-	  mu4e-get-mail-command "mbsync --all --config ~/.config/mbsync/config"
-	  mu4e-update-interval 300
-	  mu4e-alert-max-messages-to-process 1000
-	  mu4e-attachment-dir "~/Downloads"
-	  mu4e-use-fancy-chars t
-	  mu4e-index-cleanup t ;; do a full cleanup check
-	  mu4e-index-lazy-check t ;; dont consider up-to-date dirs
-	  mu4e-index-update-error-warning nil ;; mbsync exists with 1 due to unknown flags on far
-	  mu4e-hide-index-messages t ;; do not show any messages
-	  mu4e-headers-leave-behavior 'apply
-	  mu4e-view-show-images t
-	  mu4e-view-image-max-width 400
-	  mu4e-headers-skip-duplicates t)
+      mu4e-get-mail-command "mbsync --all --config ~/.config/mbsync/config"
+      mu4e-update-interval 300
+      mu4e-alert-max-messages-to-process 1000
+      mu4e-attachment-dir "~/Downloads"
+      mu4e-use-fancy-chars t
+      mu4e-completing-read-function 'completing-read
+      mu4e-index-cleanup t ;; do a full cleanup check
+      mu4e-index-lazy-check t ;; dont consider up-to-date dirs
+      mu4e-index-update-error-warning nil ;; mbsync exists with 1 due to unknown flags on far
+      mu4e-hide-index-messages t ;; do not show any messages
+      mu4e-headers-leave-behavior 'apply
+      mu4e-view-show-images t
+      mu4e-view-image-max-width 400
+      mu4e-headers-skip-duplicates t)
 
     (setq sendmail-program (executable-find "msmtp")
-	  send-mail-function #'smtpmail-send-it
-	  message-sendmail-f-is-evil t
-	  message-sendmail-extra-arguments '("--read-envelope-from" "--file=/home/f3sch/.config/msmtp/config")
-	  message-send-mail-function #'message-send-mail-with-sendmail)
+      send-mail-function #'message-send-mail-with-sendmail
+      message-sendmail-f-is-evil t
+      message-sendmail-extra-arguments '("--read-envelope-from" "--file=/home/f3sch/.config/msmtp/config")
+      message-send-mail-function #'message-send-mail-with-sendmail)
 
     (setq message-cite-reply-position 'below ;; never top post!
-	  message-kill-buffer-on-exit t)
+      message-kill-buffer-on-exit t)
 
     (setq mu4e-bookmarks
-	  '((:name "Inbox - CERN" :query "maildir:/cern/INBOX" :key ?c)
-	    (:name "Inbox - Git" :query "maildir:/git/INBOX AND NOT AND NOT list:bug-gnu-emacs.gnu.org AND NOT list:emacs-devel.gnu.org AND NOT list:help-gnu-emacs.gnu.org AND NOT to:doomemacs@noreply.github.com AND NOT to:AliceO2@noreply.github.com" :key ?g)
-	    (:name "Inbox - Web" :query "maildir:/web/INBOX or maildir:/web/Unerw&APw-nscht" :key ?w)
-	    (:name "Inbox - Uni" :query "maildir:/uni/INBOX" :key ?u)
-	    (:name "Unread Messages" :query "flag:unread AND NOT flag:thrashed" :key ?U)
-	    ;; (:name "Linux - Kernel" :query "list:linux-kernel.vger.kernel.org" :key ?K)
-	    ;; (:name "Linux - Staging" :query "list:linux-staging.lists.linux.dev" :key ?S)
-	    ;; (:name "Linux - Newbies" :query "list:kernelnewbies.kernelnewbies.org" :key ?N)
-	    (:name "Emacs - Devel" :query "list:emacs-devel.gnu.org" :key ?E)
-	    (:name "Emacs - Help" :query "list:help-gnu-emacs.gnu.org" :key ?H)
-	    (:name "Emacs - Bug" :query "list:bug-gnu-emacs.gnu.org" :key ?B)
-	    (:name "Alice - O2" :query "to:AliceO2@noreply.github.com" :key ?A)))
+      '((:name "Inbox - CERN" :query "maildir:/cern/INBOX" :key ?c)
+        (:name "Inbox - Git" :query "maildir:/git/INBOX AND NOT AND NOT list:bug-gnu-emacs.gnu.org AND NOT list:emacs-devel.gnu.org AND NOT list:help-gnu-emacs.gnu.org AND NOT to:doomemacs@noreply.github.com AND NOT to:AliceO2@noreply.github.com" :key ?g)
+        (:name "Inbox - Web" :query "maildir:/web/INBOX or maildir:/web/Unerw&APw-nscht" :key ?w)
+        (:name "Inbox - Uni" :query "maildir:/uni/INBOX" :key ?u)
+        (:name "Unread Messages" :query "flag:unread AND NOT flag:thrashed" :key ?U)
+        ;; (:name "Linux - Kernel" :query "list:linux-kernel.vger.kernel.org" :key ?K)
+        ;; (:name "Linux - Staging" :query "list:linux-staging.lists.linux.dev" :key ?S)
+        ;; (:name "Linux - Newbies" :query "list:kernelnewbies.kernelnewbies.org" :key ?N)
+        (:name "Emacs - Devel" :query "list:emacs-devel.gnu.org" :key ?E)
+        (:name "Emacs - Help" :query "list:help-gnu-emacs.gnu.org" :key ?H)
+        (:name "Emacs - Bug" :query "list:bug-gnu-emacs.gnu.org" :key ?B)
+        (:name "Alice - O2" :query "to:AliceO2@noreply.github.com" :key ?A)))
 
     ;; Adding to the known mailing lists.
     (setq mu4e-user-mailing-lists
-	  '(("linux-kernel.vger.kernel.org" . "Linux Kernel")
-	    ("kernelnewbies.kernelnewbies.org" . "Linux Newbies")
-	    ("help-gnu-emacs.gnu.org" . "Emacs Help")
-	    ("bug-gnu-emacs.gnu.org" . "Emacs Bugs")
-	    ("emacs-devel.gnu.org" . "Emacs Devel")))
+      '(("linux-kernel.vger.kernel.org" . "Linux Kernel")
+        ("kernelnewbies.kernelnewbies.org" . "Linux Newbies")
+        ("help-gnu-emacs.gnu.org" . "Emacs Help")
+        ("bug-gnu-emacs.gnu.org" . "Emacs Bugs")
+        ("emacs-devel.gnu.org" . "Emacs Devel")))
 
     ;; I want to sign my mail.
     (add-hook 'mu4e-compose-mode-hook 'mml-secure-message-sign)
     (add-hook 'mu4e-view-mode-hook
-	      (epa-mail-mode))	;; SIGNING AND ENCRYPTING
+          (epa-mail-mode))	;; SIGNING AND ENCRYPTING
     (add-hook 'mu4e-compose-mode-hook
-	      (epa-mail-mode))	;; SIGNING AND ENCRYPTING
+          (epa-mail-mode))	;; SIGNING AND ENCRYPTING
 
     ;; Do not send to these addresses in wide reply.
     (setq mu4e-compose-reply-ignore-address
-	  '("notifications@github\\.com"
-	    ".*@noreply\\.github\\.com"))
+      '("notifications@github\\.com"
+        ".*@noreply\\.github\\.com"))
 
 
     (setq mu4e-eldoc-support t)
 
     (setq mu4e-contexts
-	  `( ,(make-mu4e-context
-	       :name "WEB"
-	       :enter-func (lambda () (mu4e-message "Entering WEB context"))
-	       :leave-func (lambda () (mu4e-message "Leaving WEB context"))
-	       ;; we match based on the contact-fields of the message
-	       :match-func (lambda (msg)
-			     (when msg
-			       (mu4e-message-contact-field-matches msg
-								   :to "felix.schlepper@web.de")))
-	       :vars '( ( user-mail-address . "felix.schlepper@web.de"  )
-			( smtpmail-smtp-user . "felix.schlepper@web.de")
-			( user-full-name . "Felix Schlepper" )
-			( message-user-organization . "Private" )
-			( mu4e-sent-folder . "/web/Sent")
-			( mu4e-drafts-folder . "/web/Entwurf")
-			( mu4e-trash-folder . "/web/Trash")
-			( mu4e-refile-folder . "/web/INBOX")
-			( mu4e-maildir-shortcuts . (
-						    ("/web/INBOX" . ?i)
-						    ("/web/Trash" . ?t)
-						    ("/web/Sent" . ?S)
-						    ("/web/Unerw&APw-nscht" . ?s)
-						    ("/web/Unbekannt" . ?u)))
-			( mu4e-compose-signature .
-			  (concat
-			   "Viele Gruesse\n"
-			   "Felix\n"
-			   "(GPG: 0x997C87E6BE5239F0)"))))
-	     ,(make-mu4e-context
-	       :name "UNI"
-	       :enter-func (lambda () (mu4e-message "Entering UNI context"))
-	       :leave-func (lambda () (mu4e-message "Leaving UNI context"))
-	       ;; we match based on the contact-fields of the message
-	       :match-func (lambda (msg)
-			     (when msg
-			       (mu4e-message-contact-field-matches msg
-								   :to "schlepper@stud.uni-heidelberg.de")))
-	       :vars '( ( user-mail-address . "schlepper@stud.uni-heidelberg.de"  )
-			( smtpmail-smtp-user . "schlepper@stud.uni-heidelberg.de")
-			( user-full-name . "Felix Schlepper" )
-			( message-user-organization . "UNI" )
-			( mu4e-sent-folder . "/uni/Sent")
-			( mu4e-drafts-folder . "/uni/Drafts")
-			( mu4e-trash-folder . "/uni/Trash")
-			( mu4e-refile-folder . "/uni/INBOX")
-			( mu4e-maildir-shortcuts . (
-						    ("/uni/INBOX" . ?i)
-						    ("/uni/Trash" . ?t)
-						    ("/uni/Sent" . ?S)))
-			( mu4e-compose-signature .
-			  (concat
-			   "Cheers\n"
-			   "Felix\n"
-			   "(GPG: 0x997C87E6BE5239F0)"))))
-	     ,(make-mu4e-context
-	       :name "GIT"
-	       :enter-func (lambda () (mu4e-message "Entering GIT context"))
-	       :leave-func (lambda () (mu4e-message "Leaving GIT context"))
-	       ;; we match based on the contact-fields of the message
-	       :match-func (lambda (msg)
-			     (when msg
-			       (mu4e-message-contact-field-matches msg
-								   :to "f3sch.git@outlook.com")))
-	       :vars '( ( user-mail-address . "f3sch.git@outlook.com"  )
-			( smtpmail-smtp-user . "f3sch.git@outlook.com")
-			( user-full-name . "Felix Schlepper" )
-			( message-user-organization . "Git" )
-			( mu4e-sent-folder . "/git/Sent")
-			( mu4e-drafts-folder . "/git/Drafts")
-			( mu4e-trash-folder . "/git/Deleted")
-			( mu4e-refile-folder . "/git/INBOX")
-			( mu4e-maildir-shortcuts . (
-						    ("/git/INBOX" . ?i)
-						    ("/git/Deleted" . ?t)
-						    ("/git/Sent" . ?S)
-						    ("/git/Junk" . ?s)
-						    ("/git/Archive" . ?a)
-						    ("/git/Notes" . ?n)
-						    ("/git/Outbox" . ?o)
-						    ("/git/Kernelnewbies" . ?k)))
-			( mu4e-compose-signature .
-			  (concat
-			   "Cheers\n"
-			   "Felix\n"
-			   "(GPG: 0x997C87E6BE5239F0)"))))
-	     ,(make-mu4e-context
-	       :name "CERN"
-	       :enter-func (lambda () (mu4e-message "Entering CERN context"))
-	       :leave-func (lambda () (mu4e-message "Leaving CERN context"))
-	       ;; we match based on the contact-fields of the message
-	       :match-func (lambda (msg)
-			     (when msg
-			       (mu4e-message-contact-field-matches msg
-								   :to "felix.schlepper@cern.ch")))
-	       :vars '( ( user-mail-address . "felix.schlepper@cern.ch"  )
-			( smtpmail-smtp-user . "felix.schlepper@cern.ch")
-			( user-full-name . "Felix Schlepper" )
-			( message-user-organization . "CERN" )
-			( mu4e-sent-folder . "/cern/Sent Items")
-			( mu4e-drafts-folder . "/cern/Drafts")
-			( mu4e-trash-folder . "/cern/Deleted Items")
-			( mu4e-refile-folder . "/cern/INBOX")
-			( mu4e-maildir-shortcuts . (
-						    ("/git/INBOX" . ?i)
-						    ("/git/Deleted Items" . ?t)
-						    ("/git/Sent Items" . ?s)))
-			( mu4e-compose-signature .
-			  (concat
-			   "Cheers\n"
-			   "Felix\n"
-			   "(GPG: 0x997C87E6BE5239F0)"))))))
+      `( ,(make-mu4e-context
+           :name "WEB"
+           :enter-func (lambda () (mu4e-message "Entering WEB context"))
+           :leave-func (lambda () (mu4e-message "Leaving WEB context"))
+           ;; we match based on the contact-fields of the message
+           :match-func (lambda (msg)
+                 (when msg
+                   (mu4e-message-contact-field-matches msg
+                                   :to "felix.schlepper@web.de")))
+           :vars '( ( user-mail-address . "felix.schlepper@web.de"  )
+            ( smtpmail-smtp-user . "felix.schlepper@web.de")
+            ( user-full-name . "Felix Schlepper" )
+            ( message-user-organization . "Private" )
+            ( mu4e-sent-folder . "/web/Sent")
+            ( mu4e-drafts-folder . "/web/Entwurf")
+            ( mu4e-trash-folder . "/web/Trash")
+            ( mu4e-refile-folder . "/web/INBOX")
+            ( mu4e-maildir-shortcuts . (
+                            ("/web/INBOX" . ?i)
+                            ("/web/Trash" . ?t)
+                            ("/web/Sent" . ?S)
+                            ("/web/Unerw&APw-nscht" . ?s)
+                            ("/web/Unbekannt" . ?u)))
+            ( mu4e-compose-signature .
+              (concat
+               "Viele Gruesse\n"
+               "Felix\n"
+               "(GPG: 0x997C87E6BE5239F0)"))))
+         ,(make-mu4e-context
+           :name "UNI"
+           :enter-func (lambda () (mu4e-message "Entering UNI context"))
+           :leave-func (lambda () (mu4e-message "Leaving UNI context"))
+           ;; we match based on the contact-fields of the message
+           :match-func (lambda (msg)
+                 (when msg
+                   (mu4e-message-contact-field-matches msg
+                                   :to "schlepper@stud.uni-heidelberg.de")))
+           :vars '( ( user-mail-address . "schlepper@stud.uni-heidelberg.de"  )
+            ( smtpmail-smtp-user . "schlepper@stud.uni-heidelberg.de")
+            ( user-full-name . "Felix Schlepper" )
+            ( message-user-organization . "UNI" )
+            ( mu4e-sent-folder . "/uni/Sent")
+            ( mu4e-drafts-folder . "/uni/Drafts")
+            ( mu4e-trash-folder . "/uni/Trash")
+            ( mu4e-refile-folder . "/uni/INBOX")
+            ( mu4e-maildir-shortcuts . (
+                            ("/uni/INBOX" . ?i)
+                            ("/uni/Trash" . ?t)
+                            ("/uni/Sent" . ?S)))
+            ( mu4e-compose-signature .
+              (concat
+               "Cheers\n"
+               "Felix\n"
+               "(GPG: 0x997C87E6BE5239F0)"))))
+         ,(make-mu4e-context
+           :name "GIT"
+           :enter-func (lambda () (mu4e-message "Entering GIT context"))
+           :leave-func (lambda () (mu4e-message "Leaving GIT context"))
+           ;; we match based on the contact-fields of the message
+           :match-func (lambda (msg)
+                 (when msg
+                   (mu4e-message-contact-field-matches msg
+                                   :to "f3sch.git@outlook.com")))
+           :vars '( ( user-mail-address . "f3sch.git@outlook.com"  )
+            ( smtpmail-smtp-user . "f3sch.git@outlook.com")
+            ( user-full-name . "Felix Schlepper" )
+            ( message-user-organization . "Git" )
+            ( mu4e-sent-folder . "/git/Sent")
+            ( mu4e-drafts-folder . "/git/Drafts")
+            ( mu4e-trash-folder . "/git/Deleted")
+            ( mu4e-refile-folder . "/git/INBOX")
+            ( mu4e-maildir-shortcuts . (
+                            ("/git/INBOX" . ?i)
+                            ("/git/Deleted" . ?t)
+                            ("/git/Sent" . ?S)
+                            ("/git/Junk" . ?s)
+                            ("/git/Archive" . ?a)
+                            ("/git/Notes" . ?n)
+                            ("/git/Outbox" . ?o)
+                            ("/git/Kernelnewbies" . ?k)))
+            ( mu4e-compose-signature .
+              (concat
+               "Cheers\n"
+               "Felix\n"
+               "(GPG: 0x997C87E6BE5239F0)"))))
+         ,(make-mu4e-context
+           :name "CERN"
+           :enter-func (lambda () (mu4e-message "Entering CERN context"))
+           :leave-func (lambda () (mu4e-message "Leaving CERN context"))
+           ;; we match based on the contact-fields of the message
+           :match-func (lambda (msg)
+                 (when msg
+                   (mu4e-message-contact-field-matches msg
+                                   :to "felix.schlepper@cern.ch")))
+           :vars '( ( user-mail-address . "felix.schlepper@cern.ch"  )
+            ( smtpmail-smtp-user . "felix.schlepper@cern.ch")
+            ( user-full-name . "Felix Schlepper" )
+            ( message-user-organization . "CERN" )
+            ( mu4e-sent-folder . "/cern/Sent Items")
+            ( mu4e-drafts-folder . "/cern/Drafts")
+            ( mu4e-trash-folder . "/cern/Deleted Items")
+            ( mu4e-refile-folder . "/cern/INBOX")
+            ( mu4e-maildir-shortcuts . (
+                            ("/git/INBOX" . ?i)
+                            ("/git/Deleted Items" . ?t)
+                            ("/git/Sent Items" . ?s)))
+            ( mu4e-compose-signature .
+              (concat
+               "Cheers\n"
+               "Felix\n"
+               "(GPG: 0x997C87E6BE5239F0)"))))))
 
     ;; set `mu4e-context-policy` and `mu4e-compose-policy` to tweak when
     ;; mu4e should guess or ask the correct context, e.g.
