@@ -2055,7 +2055,21 @@ Hence Something visually appealing.
     ;; Undo-tree is too chatty about saving its history files. This doesn't
     ;; totally suppress it logging to *Messages*, it only stops it from appearing
     ;; in the echo-area.
-    (advice-add #'undo-tree-save-history :around #'doom-shut-up-a))
+    (advice-add #'undo-tree-save-history :around #'doom-shut-up-a)
+
+    ;; An interesting behavior from DoomEmacs is to compress the history files
+    ;; with zstd when it is present on the system. Not only do we enjoy much
+    ;; smaller files (according to DoomEmacs, we get something like 80% file
+    ;; savings), Emacs can load them much faster than the regular files. Sure, it
+    ;; uses more CPU time uncompressing these files, but it’s insignificant, and
+    ;; it’s still faster than loading a heavier file.
+    (when (executable-find "zstd")
+      (defun my/undo-tree-append-zst-to-filename (filename)
+        "Append .zst to the FILENAME in order to compress it."
+        (concat filename ".zst"))
+      (advice-add 'undo-tree-make-history-save-file-name
+                  :filter-return
+                  #'my/undo-tree-append-zst-to-filename)))
 #+END_SRC
 
 * Org
