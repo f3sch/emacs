@@ -437,6 +437,34 @@ Embrace the daemon.
       revert-without-query (list ".")))
 #+END_SRC
 
+** General.el
+I use =general= for better keybindings.
+This is provided early so that I can use the =:general= keyword in =use-package=.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package general
+    :straight (general :type git :host github :repo "noctuid/general.el")
+    :demand t
+    :config
+    (general-evil-setup t))
+#+END_SRC
+
+*** Leader Keys
+Define leader keys.
+#+BEGIN_SRC emacs-lisp
+  (general-create-definer +leader-key
+    :states '(normal visual emacs)
+    :keymaps 'override
+    :prefix "SPC"
+    :global-prefix "C-SPC")
+
+  (general-create-definer +local-leader-key
+    :states '(normal visual emacs)
+    :keymaps 'override
+    :prefix "SPC m"
+    :global-prefix "M-m")
+#+END_SRC
+
 ** Visible Bell
 The first visual setting in this section will activate the visible bell. What it
 does is I get a visual feedback each time I do something Emacs doesn’t agree
@@ -1126,26 +1154,6 @@ Nice visual features.
     (doom-themes-org-config))
 #+END_SRC
 
-* Keybindings
-I use =general= for better keybindings.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package general
-    :straight (general :type git :host github :repo "noctuid/general.el")
-    :demand t
-    :config
-    (general-evil-setup t))
-#+END_SRC
-
-Define leader keys.
-#+BEGIN_SRC emacs-lisp
-  (general-create-definer +leader-key
-    :prefix "SPC")
-
-  (general-create-definer +local-leader-key
-    :prefix "SPC m")
-#+END_SRC
-
 * Windows/Buffers
 ** Windows
 *** Winner
@@ -1185,47 +1193,18 @@ Define leader keys.
       (call-interactively #'evil-window-vsplit)))
 #+END_SRC
 
-*** Keybindings
+** Buffers
+*** Settings
+Now Emacs treats manual buffer switching the same as programmatic switching.
 #+BEGIN_SRC emacs-lisp
-  (+leader-key
-    :keymaps 'normal
-
-    ;; Name
-    "w" '(:ignore t :wk "Window Managment")
-
-    ;; Movement
-    "wl" '(windmove-right :wk "Move Right")
-    "wj" '(windmove-down :wk "Move Down")
-    "wk" '(windmove-up :wk "Move Up")
-    "wh" '(windmove-left :wk "Move Left")
-
-    ;; Swap
-    "wsh" '(windmove-swap-states-right :wk "Swap Right")
-    "wsj" '(windmove-swap-states-down :wk "Swap Down")
-    "wsk" '(windmove-swap-states-up :wk "Swap Up")
-    "wsl" '(windmove-swap-states-left :wk "Swap Left")
-
-    ;; Re-/Undo
-    "wu" '(winner-undo :wk "Undo")
-    "wr" '(winner-redo :wk "Redo")
-
-    ;; Split
-    "ws" '(evil-window-split :wk "Split")
-    "wS" '(+evil-window-split-follow :wk "Split and Follow")
-    "wv" '(evil-window-vsplit :wk "VSplit")
-    "wV" '(+evil-window-vsplit-follow :wk "VSplit and Follow")
-
-    ;; Delete
-    "wd" '(evil-window-delete :wk "Delete")
-    "wDh" '(windmove-delete-right :wk "Delete Right")
-    "wDj" '(windmove-delete-down :wk "Delete Down")
-    "wDk" '(windmove-delete-up :wk "Delete Up")
-    "wDl" '(windmove-delete-left :wk "Delete Left"))
+  (setq switch-to-buffer-obey-display-actions t
+        switch-to-buffer-in-dedicated-window 'pop)
 #+END_SRC
 
-** Buffers
+
 #+BEGIN_SRC emacs-lisp
   (use-package bufler
+    :disabled t
     :config
     (bufler-defgroups
      (group
@@ -2439,12 +2418,12 @@ Giving parenthesis some brains.
 #+BEGIN_SRC emacs-lisp
   (require 'epg-config)                           ; for mu4e
   (setq mml2015-use 'epg                          ;    "
-	mm-verify-option 'known
-	gnus-buttonized-mime-types '("multipart/signed")
-	mml-secure-openpgp-encrypt-to-self  t     ;    "
-	mml-secure-openpgp-sign-with-sender t     ;    "
-	mml-secure-openpgp-signers '("BE70541948D9FB3FF0674B92997C87E6BE5239F0")
-	epg-user-id "BE70541948D9FB3FF0674B92997C87E6BE5239F0")
+    mm-verify-option 'known
+    gnus-buttonized-mime-types '("multipart/signed")
+    mml-secure-openpgp-encrypt-to-self  t     ;    "
+    mml-secure-openpgp-sign-with-sender t     ;    "
+    mml-secure-openpgp-signers '("BE70541948D9FB3FF0674B92997C87E6BE5239F0")
+    epg-user-id "BE70541948D9FB3FF0674B92997C87E6BE5239F0")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -2504,6 +2483,135 @@ take a screenshot of a specific area of a buffer and make it look nice.
                           :type git
                           :host github
                           :repo "tecosaur/screenshot"))
+#+END_SRC
+
+* Keybindings
+** Functions
+#+BEGIN_SRC emacs-lisp
+  (defun +open-config ()
+    "Open the config file."
+    (interactive)
+    (find-file +config-file))
+#+END_SRC
+
+** Bindings
+*** Buffers
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "b"
+    "" '(:ignore t :wk "Buffers")
+    "b" '(persp-switch-to-buffer* :wk "Switch")
+    "k" '(persp-kill-buffer* :wk "Kill"))
+#+END_SRC
+
+*** Files
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "f"
+    "" '(:ignore t :wk "Files")
+    "s" '(save-buffer :wk "Save Buffer")
+    "r" '(rename-visited-file :wk "Rename Visited File")
+    "R" '(rename-file :wk "Rename File"))
+#+END_SRC
+
+*** Project
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "p"
+    "" '(:ignore t :wk "Project")
+    "p" '(project-switch-project :wk "Switch Project")
+    "b" '(consult-project-buffer :wk "Switch Buffer")
+    "f" '(project-find-file :wk "Find File")
+    "k" '(project-kill-buffers :wk "Kill Project Buffers")
+    "r" '(project-find-regexp :wk "Search by regexp")
+    "g" '(consult-git-grep :wk "Git Grep")
+    "c" '(project-compile :wk "Compile Project")
+    "v" '(project-vc-dir :wk "Open vc Dialog")
+    "s" '(project-shell :wk "Open Shell")
+    "d" '(project-dired :wk "Open Dired"))
+#+END_SRC
+
+*** Open
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "o"
+    "" '(:ignore t :wk "Open")
+    "T" '(consult-theme :wk "Pick Theme")
+    "f" '(+open-config :wk "Edit Config"))
+#+END_SRC
+
+*** Window
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "w"
+    "" '(:ignore t :wk "Window Managment")
+
+    ;; Movement
+    "l" '(windmove-right :wk "Move Right")
+    "j" '(windmove-down :wk "Move Down")
+    "k" '(windmove-up :wk "Move Up")
+    "h" '(windmove-left :wk "Move Left")
+
+    ;; Swap
+    "TAB" '(:ignore t :wk "Swap Windows")
+    "TAB h" '(windmove-swap-states-left :wk "Swap Left")
+    "TAB j" '(windmove-swap-states-down :wk "Swap Down")
+    "TAB k" '(windmove-swap-states-up :wk "Swap Up")
+    "TAB l" '(windmove-swap-states-right :wk "Swap Right")
+
+    ;; Re-/Undo
+    "u" '(winner-undo :wk "Undo Window Change")
+    "r" '(winner-redo :wk "Redo Window Change")
+
+    ;; Split
+    "s" '(evil-window-split :wk "Split")
+    "S" '(+evil-window-split-follow :wk "Split and Follow")
+    "v" '(evil-window-vsplit :wk "VSplit")
+    "V" '(+evil-window-vsplit-follow :wk "VSplit and Follow")
+
+    ;; Delete
+    "d" '(delete-window :wk "Delete")
+    "D" '(:ignore t :wk "Delete Windows")
+    "Dh" '(windmove-delete-right :wk "Delete Right")
+    "Dj" '(windmove-delete-down :wk "Delete Down")
+    "Dk" '(windmove-delete-up :wk "Delete Up")
+    "Dl" '(windmove-delete-left :wk "Delete Left")
+    "Do" '(delete-other-windows :wk "Delete All Other Windows")
+
+    ;; Quitting
+    "Q" '(save-buffers-kill-emacs :wk "Save all Buffers and Kill Emacs"))
+#+END_SRC
+
+*** Workspaces
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "TAB"
+    "" '(:ignore t :wk "Workspaces")
+    "b" '(persp-switch-to-buffer :wk "Switch to Buffer")
+    "n" '(persp-new :wk "New")
+    "m" '(persp-merge :wk "Merge")
+    "u" '(persp-unmerge :wk "Unmerge")
+    "s" '(persp-state-save :wk "Save State")
+    "l" '(persp-state-load :wk "Load State")
+    "i" '(persp-import :wk "Import a Perspective into another Frame")
+    "TAB" '(persp-switch :wk "Switch")
+    "`" '(persp-switch-by-number :wk "Switch by Number")
+    "-" '(persp-remove-buffer :wk "Remove Buffer")
+    "+" '(persp-set-buffer :wk "Add Buffer")
+    "r" '(persp-rename :wk "Rename Perspective")
+    "d" '(persp- :wk "Delete")
+    "]" '(persp-next :wk "Next")
+    "[" '(persp-prev :wk "Previous"))
+#+END_SRC
+
+*** Special
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    "/" '(consult-ripgrep :wk "Ripgrep")
+    "." '(consult-line :wk "Search File")
+    "SPC" '(consult-find :wk "Find File")
+    "s" '(screenshot :wk "Screnshot Buffer")
+    "S" '(self-screenshot :wk "Screnshot Emacs"))
 #+END_SRC
 
 * EOF
