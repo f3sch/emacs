@@ -1130,7 +1130,10 @@ Define leader keys.
     :bind
     ("C-x C-b" . persp-list-buffers)         ; or use a nicer switcher, see below
     :custom
+    (persp-sort 'access)
     (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
+    (persp-state-default-file (file-name-concat user-emacs-directory "perspectives"))
+    :hook (kill-emacs . persp-state-save)
     :init
     (persp-mode))
 #+END_SRC
