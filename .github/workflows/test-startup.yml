@@ -28,7 +28,9 @@ jobs:
         version: ${{ matrix.emacs_version }}
     - name: Install Homebrew dependencies (on macOS)
       if: matrix.os == 'macos-latest'
-      run: env HOMEBREW_NO_AUTO_UPDATE=1 brew install mu automake autoconf pkgconfig libtool
+      run: |
+        env HOMEBREW_NO_AUTO_UPDATE=1 brew install automake autoconf pkgconfig libtool meson ninja libgpg-error libtool pkg-config glib gmime xapian guile texinfo
+        env HOMEBREW_NO_AUTO_UPDATE=1 brew install mu
     - name: Install APT dependencies (on Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt install git meson libgmime-3.0-dev libxapian-dev -y
