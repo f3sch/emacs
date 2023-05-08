@@ -2599,7 +2599,12 @@ take a screenshot of a specific area of a buffer and make it look nice.
     (find-file +config-file))
 #+END_SRC
 
-** Bindings
+** Emacs Bindings
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-s") 'consult-line)
+#+END_SRC
+
+** Leader Bindings
 *** Buffers
 #+BEGIN_SRC emacs-lisp
   (+leader-key
@@ -2615,6 +2620,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
     :infix "f"
     "" '(:ignore t :wk "Files")
     "s" '(save-buffer :wk "Save Buffer")
+    "f" '(find-file :wk "Find File")
     "r" '(rename-visited-file :wk "Rename Visited File")
     "R" '(rename-file :wk "Rename File"))
 #+END_SRC
@@ -2641,8 +2647,11 @@ take a screenshot of a specific area of a buffer and make it look nice.
   (+leader-key
     :infix "o"
     "" '(:ignore t :wk "Open")
+    "m" '(mu4e :wk "Mail")
     "T" '(consult-theme :wk "Pick Theme")
-    "f" '(+open-config :wk "Edit Config"))
+    "f" '(+open-config :wk "Edit Config")
+    "-" '(dirvish :wk "Dired")
+    "s" '(dirvish-side :wk "Sidebar"))
 #+END_SRC
 
 *** Window
@@ -2693,7 +2702,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
     :infix "TAB"
     "" '(:ignore t :wk "Workspaces")
     "b" '(persp-switch-to-buffer :wk "Switch to Buffer")
-    "n" '(persp-new :wk "New")
+    "n" '(persp-switch :wk "New")
     "m" '(persp-merge :wk "Merge")
     "u" '(persp-unmerge :wk "Unmerge")
     "s" '(persp-state-save :wk "Save State")
@@ -2704,7 +2713,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "-" '(persp-remove-buffer :wk "Remove Buffer")
     "+" '(persp-set-buffer :wk "Add Buffer")
     "r" '(persp-rename :wk "Rename Perspective")
-    "d" '(persp- :wk "Delete")
+    "d" '(persp-kill :wk "Delete")
     "]" '(persp-next :wk "Next")
     "[" '(persp-prev :wk "Previous"))
 #+END_SRC
