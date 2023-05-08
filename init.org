@@ -2275,9 +2275,7 @@ Giving parenthesis some brains.
 **** Parinfer
 #+BEGIN_SRC emacs-lisp
   (use-package parinfer-rust-mode
-    :defer t
-    :straight (:build t)
-    :diminish parinfer-rust-mode
+    :disabled t
     :hook emacs-lisp-mode common-lisp-mode scheme-mode
     :init
     (setq parinfer-rust-auto-download     t
@@ -2285,6 +2283,7 @@ Giving parenthesis some brains.
                                                   "parinfer-rust/"))
     (add-hook 'parinfer-rust-mode-hook
               (lambda () (smartparens-mode -1)))
+    (add-hook 'org-mode-hook (lambda () (parinfer-rust-mode -1)))
     :general
     (+local-leader-key
       :keymaps 'parinfer-rust-mode-map
