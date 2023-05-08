@@ -1171,6 +1171,15 @@ Nice visual features.
     (doom-themes-org-config))
 #+END_SRC
 
+** Zoom
+Zoom using =CTRL= +/-/0.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-+") 'text-scale-increase)
+  (global-set-key (kbd "C--") 'text-scale-decrease)
+  (global-set-key (kbd "C-=") (lambda () (interactive) (text-scale-adjust 0)))
+#+END_SRC
+
 * Windows/Buffers
 ** Windows
 *** Winner
