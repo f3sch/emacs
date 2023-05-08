@@ -476,6 +476,9 @@ Define leader keys.
     :keymaps 'override
     :prefix "SPC m"
     :global-prefix "M-m")
+
+  (general-create-definer +evil
+    :states '(normal))
 #+END_SRC
 
 ** Visible Bell
