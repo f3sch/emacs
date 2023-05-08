@@ -2230,17 +2230,19 @@ Giving parenthesis some brains.
 * EMail
 #+BEGIN_SRC emacs-lisp
   (use-package mu4e
-    :unless (eq system-type 'darwin)
+    :unless (or (eq system-type 'darwin) (memq window-system '(mac ns)))
     :commands mu4e
     :init
-    (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
+    (let ((mu4e-path "/usr/local/share/emacs/site-lisp/mu/mu4e"))
+      (when (file-directory-p mu4e-path)
+        (add-to-list 'load-path mu4e-path)))
     :config
     ;; use mu4e for e-mail in emacs
     (setq mail-user-agent 'mu4e-user-agent)
 
     ;; the headers to show in the headers list -- a pair of a field
     ;; and its width, with `nil' meaning 'unlimited'
-    ;; (better only use that for the last field.
+    ;; better only use that for the last field.
     ;; These are the defaults:
     (setq mu4e-headers-fields
       '( (:date          .  25)    ;; alternatively, use :human-date
@@ -2297,10 +2299,7 @@ Giving parenthesis some brains.
 
     ;; I want to sign my mail.
     (add-hook 'mu4e-compose-mode-hook 'mml-secure-message-sign)
-    (add-hook 'mu4e-view-mode-hook
-          (epa-mail-mode))	;; SIGNING AND ENCRYPTING
-    (add-hook 'mu4e-compose-mode-hook
-          (epa-mail-mode))	;; SIGNING AND ENCRYPTING
+    (epa-global-mail-mode)
 
     ;; Do not send to these addresses in wide reply.
     (setq mu4e-compose-reply-ignore-address
@@ -2458,6 +2457,22 @@ I’ll activate the modeline notification.
     (mu4e-alert-set-default-style 'notifications)
     :config
     (setq mu4e-alert-interesting-mail-query "flag:unread"))
+#+END_SRC
+
+** Icons
+#+BEGIN_SRC emacs-lisp
+  (if (display-graphic-p)
+      (setq mu4e-headers-draft-mark `("D" . ,(all-the-icons-faicon "pencil" :height 0.8))
+            mu4e-headers-flagged-mark `("F" . ,(all-the-icons-faicon "flag" :height 0.8))
+            mu4e-headers-new-mark `("N" . ,(all-the-icons-faicon "rss" :height 0.8))
+            mu4e-headers-passed-mark `("P" . ,(all-the-icons-faicon "check" :height 0.8))
+            mu4e-headers-replied-mark `("R" . ,(all-the-icons-faicon "reply" :height 0.8))
+            mu4e-headers-seen-mark `("S" . ,(all-the-icons-faicon "eye" :height 0.8))
+            mu4e-headers-unread-mark `("u" . ,(all-the-icons-faicon "eye-slash" :height 0.8))
+            mu4e-headers-trashed-mark `("T" . ,(all-the-icons-faicon "trash" :height 0.8))
+            mu4e-headers-attach-mark `("a" . ,(all-the-icons-faicon "paperclip" :height 0.8))
+            mu4e-headers-encrypted-mark `("x" . ,(all-the-icons-faicon "lock" :height 0.8))
+            mu4e-headers-signed-mark `("s" . ,(all-the-icons-faicon "certificate" :height 0.8))))
 #+END_SRC
 
 * Tools
