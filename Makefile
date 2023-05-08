@@ -20,7 +20,7 @@ init.el: init.org clean-init
 
 clean:
 	$(RM) *~
-	$(RM) \#*\# init.el
+	$(RM) \#*\# init.el early-init.el
 	$(RM) *.elc
 	$(RM) lisp/*.elc
 	$(RM) tmp/
