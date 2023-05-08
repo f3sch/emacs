@@ -2158,6 +2158,51 @@ Hence Something visually appealing.
 #+END_SRC
 
 * Programming
+#+BEGIN_SRC emacs-lisp
+  (use-package prog-mode
+    :straight (:type built-in)
+    :config
+    (global-prettify-symbols-mode +1)
+    (setq prettify-symbols-unprettify-at-point 'right-edge
+          next-error-message-highlight t
+          show-paren-context-when-offscreen 'child-frame)
+    (add-hook 'prog-mode 'show-paren-mode))
+#+END_SRC
+
+** LSP
+#+BEGIN_SRC emacs-lisp
+  (use-package eglot
+    :straight (:type built-in)
+    :custom
+    (eglot-autoshutdown t)
+    (eglot-autoreconnect 3)
+    (eglot-sync-connect 1)
+    (eglot-connect-timeout 10)
+    (eglot-send-changes-idle-time 0.5)
+    :config
+    (add-to-list 'eglot-stay-out-of 'eldoc-documentation-strategy)
+
+  ;;; C/C++
+    (add-hook 'c-mode 'eglot-ensure)
+    (add-hook 'c++-mode 'eglot-ensure)
+    (add-hook 'c-ts-mode 'eglot-ensure)
+    (add-hook 'c++-ts-mode 'eglot-ensure)
+    (add-to-list 'eglot-server-programs
+                 '((c-ts-mode c++-ts-mode c-mode c++-mode)
+                   . ("clangd"
+                      "-j=2"
+                      "--offset-encoding=utf-8"
+                      "--header-insertion=never"
+                      "--header-insertion-decorators=0"
+                      "--completion-style=detailed"
+                      "--completion-parse=auto"
+                      "--log=error"
+                      "--malloc-trim"
+                      "--background-index"
+                      "--pch-storage=disk"
+                      "--clang-tidy"))))
+#+END_SRC
+
 ** Treesitter
 The future.
 
