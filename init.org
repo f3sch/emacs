@@ -701,6 +701,11 @@ Try to keep the cursor out of the read-only portions of the minibuffer.
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 #+END_SRC
 
+** Exit Emacs
+#+BEGIN_SRC emacs-lisp
+  (setopt confirm-kill-emacs 'yes-or-no-p)
+#+END_SRC
+
 ** Lockfiles
 Disable Lockfiles.
 
