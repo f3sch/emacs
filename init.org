@@ -2615,6 +2615,124 @@ One thing =pdf-tools= doesn’t handle is restoring the PDF to the last point it
     :defer t)
 #+END_SRC
 
+** Compile
+#+BEGIN_SRC emacs-lisp
+  (use-package compile
+    :defer t
+    :straight (:type built-in)
+    :hook (compilation-filter . colorize-compilation-buffer)
+    :init
+    (require 'ansi-color)
+    (defun colorize-compilation-buffer ()
+      (let ((inhibit-read-only t))
+        (ansi-color-apply-on-region (point-min) (point-max))))
+    :custom
+    (compilation-scroll-output t)
+    :general
+    (+evil
+      :keymaps 'compilation-mode-map
+      "g" nil
+      "r" nil
+      "R" #'recompile
+      "h" nil))
+#+END_SRC
+
+** Info
+#+BEGIN_SRC emacs-lisp
+  (use-package info
+    :straight (:type built-in)
+    :general
+    (+evil
+      :keymaps 'Info-mode-map
+      "c" #'Info-prev
+      "t" #'evil-scroll-down
+      "s" #'evil-scroll-up
+      "r" #'Info-next
+      "?" #'Info-toc
+      "b" #'Info-history-back
+      "f" #'Info-history-forward
+      "m" #'Info-menu
+      "t" #'Info-top-node
+      "u" #'Info-up))
+#+END_SRC
+
+** Tramp
+** Flycheck
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :defer t
+    :init
+    (global-flycheck-mode)
+    :config
+    (setq flycheck-emacs-lisp-load-path 'inherit)
+
+    ;; Rerunning checks on every newline is a mote excessive.
+    (delq 'new-line flycheck-check-syntax-automatically)
+    ;; And don’t recheck on idle as often
+    (setq flycheck-idle-change-delay 2.0)
+
+    ;; For the above functionality, check syntax in a buffer that you
+    ;; switched to on briefly. This allows “refreshing” the syntax check
+    ;; state for several buffers quickly after e.g. changing a config
+    ;; file.
+    (setq flycheck-buffer-switch-check-intermediate-buffers t)
+
+    ;; Display errors a little quicker (default is 0.9s)
+    (setq flycheck-display-errors-delay 0.2))
+
+  (use-package flycheck-popup-tip
+    :after (flycheck evil)
+    :hook (flycheck-mode . flycheck-popup-tip-mode)
+    :config
+    (setq flycheck-popup-tip-error-prefix "X ")
+    (with-eval-after-load 'evil
+      (add-hook 'evil-insert-state-entry-hook
+                #'flycheck-popup-tip-delete-popup)
+      (add-hook 'evil-replace-state-entry-hook
+                #'flycheck-popup-tip-delete-popup)))
+
+  (use-package flycheck-posframe
+    :hook (flycheck-mode . flycheck-posframe-mode)
+    :config
+    (setq flycheck-posframe-warning-prefix "! "
+          flycheck-posframe-info-prefix    "··· "
+          flycheck-posframe-error-prefix   "X "))
+#+END_SRC
+
+** Keycast
+In case I am sharing my screen with people and I want to show which functions
+are called on my keystrokes since I don’t exactly use standard keybindings.
+
+#+begin_src emacs-lisp
+(use-package keycast
+  :defer t
+  :config
+  (define-minor-mode keycast-mode
+    "Show current command and its key binding in the mode line."
+    :global t
+    (if keycast-mode
+        (add-hook 'pre-command-hook 'keycast--update t)
+      (remove-hook 'pre-command-hook 'keycast--update)))
+  (add-to-list 'global-mode-string '("" mode-line-keycast " ")))
+#+end_src
+
+** Keyfreq
+Keyfreq is a package that records all the commands I call from Emacs and builds
+a heatmap out of it.
+
+#+begin_src emacs-lisp
+(use-package keyfreq
+  :init
+  (keyfreq-mode 1)
+  (keyfreq-autosave-mode 1)
+  :config
+  (setq keyfreq-excluded-commands '(self-insert-command org-self-insert-command
+                                    evil-previous-visual-line evil-next-visual-line
+                                    ivy-next-line evil-backward-char evil-forward-char
+                                    evil-next-line evil-previous-line evil-normal-state
+                                    text-scale-pinch)))
+#+end_src
+
 * EPG
 #+BEGIN_SRC emacs-lisp
   (require 'epg-config)                           ; for mu4e
