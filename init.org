@@ -911,18 +911,19 @@ the shell. Let's fix that:
 Nice visual features.
 
 #+BEGIN_SRC emacs-lisp
-(use-package all-the-icons
-  :if (display-graphic-p)
-  :commands (all-the-icons-octicon
-         all-the-icons-faicon
-         all-the-icons-fileicon
-         all-the-icons-wicon
-         all-the-icons-material
-         all-the-icons-alltheicon))
+  (use-package all-the-icons
+    :if (display-graphic-p)
+    :commands (all-the-icons-octicon
+           all-the-icons-faicon
+           all-the-icons-fileicon
+           all-the-icons-wicon
+           all-the-icons-material
+           all-the-icons-alltheicon))
 
-(use-package all-the-icons-dired
-  :if (display-graphic-p)
-  :hook (dired-mode . all-the-icons-dired-mode))
+  (use-package all-the-icons-dired
+    :if (display-graphic-p)
+    :after all-the-icons
+    :hook (dired-mode . all-the-icons-dired-mode))
 #+END_SRC
 
 ** Eldoc
@@ -1476,6 +1477,7 @@ Provide minibuffer annotations.
 *** Icons Completion
 #+BEGIN_SRC emacs-lisp
   (use-package all-the-icons-completion
+    :if (display-graphic-p)
     :after
     (marginalia all-the-icons)
     :hook
