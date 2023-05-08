@@ -98,6 +98,19 @@ Although I do not care about startup time, I want to see it.
           t)
 #+end_src
 
+** GNUTLS
+For the love of all that is holy, do not continue with untrusted connections!
+
+#+BEGIN_SRC emacs-lisp
+  (use-package gnutls
+    :demand t
+    :custom
+    (gnutls-verify-error t)
+    (gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+    :config
+    (add-to-list 'gnutls-trustfiles "/etc/ssl/cert.pem"))
+#+END_SRC
+
 ** Bootstrap straight.el
 For now I use straight.el as a package manager.
 
