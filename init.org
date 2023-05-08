@@ -2988,6 +2988,14 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "R" '(rename-file :wk "Rename File"))
 #+END_SRC
 
+*** Git
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "g"
+    "" '(:ignore t :wk "Git")
+    "g" '(magit-status :wk "Status"))
+#+END_SRC
+
 *** Project
 #+BEGIN_SRC emacs-lisp
   (+leader-key
