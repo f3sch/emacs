@@ -83,6 +83,48 @@ Required by straight.el.
 #+end_src
 
 * Startup
+** Bootstrap straight.el
+For now I use straight.el as a package manager.
+
+#+begin_src emacs-lisp
+    (defvar bootstrap-version)
+    (let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 6))
+      (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+      (load bootstrap-file nil 'nomessage))
+    (setq straight-use-package-by-default t)
+
+      ;;; Paths
+    (setq package-user-dir (expand-file-name "packages" user-emacs-directory)
+      url-history-file (expand-file-name "url/history" user-emacs-directory)
+      custom-file (expand-file-name "custom.el" user-emacs-directory))
+
+
+    (use-package diminish)
+#+end_src
+
+** Benchmark
+This is a simple benchmark of calls to Emacs require and load functions. It can
+be used to keep track of where time is being spent during Emacs startup in order
+to optimize startup times.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package benchmark-init
+    :straight (benchmark-init :type git :host github :repo "dholm/benchmark-init-el")
+    :ensure t
+    :config
+    ;; To disable collection of benchmark data after init is done.
+    (add-hook 'after-init-hook 'benchmark-init/deactivate))
+#+END_SRC
+
+
 ** Load Time
 Although I do not care about startup time, I want to see it.
 
@@ -110,33 +152,6 @@ For the love of all that is holy, do not continue with untrusted connections!
     :config
     (add-to-list 'gnutls-trustfiles "/etc/ssl/cert.pem"))
 #+END_SRC
-
-** Bootstrap straight.el
-For now I use straight.el as a package manager.
-
-#+begin_src emacs-lisp
-    (defvar bootstrap-version)
-    (let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 6))
-      (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-      (load bootstrap-file nil 'nomessage))
-    (setq straight-use-package-by-default t)
-
-      ;;; Paths
-    (setq package-user-dir (expand-file-name "packages" user-emacs-directory)
-      url-history-file (expand-file-name "url/history" user-emacs-directory)
-      custom-file (expand-file-name "custom.el" user-emacs-directory))
-
-
-    (use-package diminish)
-#+end_src
 
 * General
 ** Identity
