@@ -2292,6 +2292,16 @@ Giving parenthesis some brains.
       "M" #'parinfer-rust-toggle-disable))
 #+END_SRC
 
+*** C/C++
+** Debug
+*** GDB
+#+BEGIN_SRC emacs-lisp
+  (use-package gdb-mi
+    :straight (:type built-in)
+    :custom
+    (gdb-many-windows t))
+#+END_SRC
+
 * EMail
 #+BEGIN_SRC emacs-lisp
   (use-package mu4e
