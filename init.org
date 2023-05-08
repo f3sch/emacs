@@ -2687,7 +2687,21 @@ One thing =pdf-tools= doesn’t handle is restoring the PDF to the last point it
 #+BEGIN_SRC emacs-lisp
   (use-package ripgrep
     :if (executable-find "rg")
-    :defer t)
+    :config
+    ;; grep settings
+    (require 'grep)
+    (grep-apply-setting
+     'grep-command "rg --color=auto --null -nH --no-heading -e ")
+    (grep-apply-setting
+     'grep-template "rg --color=auto --null --no-heading -g '!*/' -e <R> <D>")
+    (grep-apply-setting
+     'grep-find-command '("rg --color=auto --null -nH --no-heading -e ''" . 38))
+    (grep-apply-setting
+     'grep-find-template "rg --color=auto --null -nH --no-heading -e <R> <D>")
+
+    ;; Cross-referencing
+    (require 'xref)
+    (setq xref-search-program 'ripgrep))
 #+END_SRC
 
 ** Compile
