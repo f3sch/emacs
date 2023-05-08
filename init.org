@@ -2073,8 +2073,8 @@ them, and fork projects among other things.
 #+BEGIN_SRC emacs-lisp
   (use-package forge
     :after magit
-    :straight (:build t)
     :init
+    (setq forge-add-default-bindings nil)
     (evil-collection-forge-setup)
     :general
     (+local-leader-key
