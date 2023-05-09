@@ -195,17 +195,26 @@ Although I do not care about startup time, I want to see it.
           t)
 #+end_src
 
-** GNUTLS
+** Security
 For the love of all that is holy, do not continue with untrusted connections!
 
+*** GNUTLS
 #+BEGIN_SRC emacs-lisp
   (use-package gnutls
-    :demand t
+    :straight (:type built-in)
     :custom
     (gnutls-verify-error t)
     (gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
     :config
     (add-to-list 'gnutls-trustfiles "/etc/ssl/cert.pem"))
+#+END_SRC
+
+*** NSM
+#+BEGIN_SRC emacs-lisp
+  (use-package nsm
+    :straight (:type built-in)
+    :custom
+    (network-security-level 'high))
 #+END_SRC
 
 * General
@@ -2975,35 +2984,47 @@ a heatmap out of it.
                                     text-scale-pinch)))
 #+end_src
 
-* EPG
-#+BEGIN_SRC emacs-lisp
-  (require 'epg-config)                           ; for mu4e
-  (setq mml2015-use 'epg                          ;    "
-    mm-verify-option 'known
-    gnus-buttonized-mime-types '("multipart/signed")
-    mml-secure-openpgp-encrypt-to-self  t     ;    "
-    mml-secure-openpgp-sign-with-sender t     ;    "
-    mml-secure-openpgp-signers '("BE70541948D9FB3FF0674B92997C87E6BE5239F0")
-    epg-user-id "BE70541948D9FB3FF0674B92997C87E6BE5239F0")
-#+END_SRC
-
+* Security
+** EPA
 #+BEGIN_SRC emacs-lisp
   (use-package epa
+    :straight (:type built-in)
     ;; force Emacs to use its own internal password prompt instead of an external
     ;; pinentry program.
     :preface (setenv "GPG_AGENT_INFO" nil)
-    :custom ((epa-pinentry-mode 'loopback) ; let EasyPG Assistant to use loopback for pinentry.
-     ;; cache passphrase for symmetric encryption.
-     ;; For security reasons, this option is turned off by default and
-     ;; not recommended to use.  Instead, consider using gpg-agent which
-     ;; does the same job in a safer way.
-     (epa-file-cache-passphrase-for-symmetric-encryption t)
-     (epa-file-inhibit-auto-save t)
-     (epa-keyserver "keys.openpgp.org")
-     (epa-file-select-keys (if (null epa-file-encrypt-to) t nil)))
+    :custom
+    (epa-pinentry-mode 'loopback) ; let EasyPG Assistant to use loopback for pinentry.
+    (epa-file-inhibit-auto-save t)
+    (epa-keyserver "keys.openpgp.org")
+    (epa-file-select-keys (if (null epa-file-encrypt-to) t nil))
+    (mml2015-use 'epg)
+    (epg-user-id "BE70541948D9FB3FF0674B92997C87E6BE5239F0")
     :commands (epa-search-keys)
     :init
     (add-to-list 'display-buffer-alist '("^\\*Keys\\*" . (display-buffer-below-selected))))
+#+END_SRC
+
+** MM-Encode
+#+BEGIN_SRC emacs-lisp
+  (use-package mm-encode
+    :straight (:type built-in)
+    :custom
+    (mm-encrypt-option nil)
+    (mm-sign-option nil)
+    (mm-verify-option 'known)
+    (gnus-buttonized-mime-types '("multipart/signed")))
+#+END_SRC
+
+** MML-Sec
+#+BEGIN_SRC emacs-lisp
+  (use-package mml-sec
+    :straight (:type built-in)
+    :custom
+    (mml-secure-smime-encrypt-to-self  t)
+    (mml-secure-smime-sign-with-sender t)
+    (mml-secure-openpgp-encrypt-to-self  t)
+    (mml-secure-openpgp-sign-with-sender t)
+    (mml-secure-openpgp-signers '("BE70541948D9FB3FF0674B92997C87E6BE5239F0")))
 #+END_SRC
 
 * Fun
