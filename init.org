@@ -160,13 +160,10 @@ Stop emacs from littering with sensible defaults to paths.
 #+BEGIN_SRC emacs-lisp
   (use-package no-littering
     :straight (no-littering :type git :host github :repo "emacscollective/no-littering")
-    :diminish
     :init
     (setq no-littering-etc-directory (expand-file-name "etc/" +cache-dir)
           no-littering-var-directory (expand-file-name "var/" +cache-dir)
-          custom-file (no-littering-expand-etc-file-name "custom.el"))
-    :config
-    (no-littering-theme-backups))
+          custom-file (no-littering-expand-etc-file-name "custom.el")))
 #+END_SRC
 
 ** Benchmark
@@ -411,9 +408,9 @@ Mostly taken from doomemacs.
 #+END_SRC
 
 ** Backups
-I don’t use backup files often as I use git to manage most of my files.
-However, I still feel safer when having a backup.  Save backup files to a
-dedicated directory.
+I don’t use backup files often as I use git to manage most of my files. However,
+I still feel safer when having a backup. Save backup files to a dedicated
+directory.
 
 #+BEGIN_SRC emacs-lisp
   (with-eval-after-load 'tramp
@@ -423,6 +420,17 @@ dedicated directory.
   ;; Backup also files under VC.
   (setq version-control t
         vc-make-backup-files t)
+  (setq backup-directory-alist
+        `((,(concat "\\`" (file-name-as-directory temporary-file-directory)))
+          ("\\`/tmp/" . nil)
+          ("\\`/dev/shm/" . nil)
+          ("." . ,(no-littering-expand-var-file-name "backup/"))))
+  (setq auto-save-file-name-transforms
+        `(("\\`/[^/]*:\\([^/]*/\\)*\\([^/]*\\)\\'"
+           ,(concat (file-name-as-directory temporary-file-directory) "\\2") t)
+          ("\\`/tmp\\([^/]*/\\)*\\(.*\\)\\'" "\\2")
+          ("\\`/dev/shm\\([^/]*/\\)*\\(.*\\)\\'" "\\2")
+          (".*" ,(no-littering-expand-var-file-name "auto-saves/") t)))
   (setq auto-save-list-file-prefix
         (no-littering-expand-var-file-name "auto-saves/sessions/"))
 #+END_SRC
@@ -482,7 +490,6 @@ Let smarter people than me think about GC.
 
 #+BEGIN_SRC emacs-lisp
   (use-package gcmh
-    :diminish
     :hook (after-init . gcmh-mode)
     :custom
     (gcmh-idle-delay 'auto)
@@ -974,7 +981,6 @@ Better minor mode deduction.
 
 #+BEGIN_SRC emacs-lisp
 (use-package auto-minor-mode
-  :diminish
   :demand t)
 #+END_SRC
 
@@ -1052,7 +1058,7 @@ Nice visual features.
 
     ;; How tall the mode-line should be. It's only respected in GUI.
     ;; If the actual char height is larger, it respects the actual height.
-    (doom-modeline-height 25)
+    (doom-modeline-height 35)
 
     ;; How wide the mode-line bar should be. It's only respected in GUI.
     (doom-modeline-bar-width 4)
@@ -1505,8 +1511,6 @@ Possibly the greatest package.
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :init
-    (which-key-mode)
-    :diminish
     (which-key-mode)
     :custom
     (which-key-idle-delay 0.1)
@@ -2177,7 +2181,6 @@ Hence Something visually appealing.
 #+BEGIN_SRC emacs-lisp
   (use-package undo-tree
     :defer t
-    :diminish
     :init
     (progn
       (setq undo-tree-visualizer-timestamps t
@@ -2265,20 +2268,18 @@ Hence Something visually appealing.
 #+BEGIN_SRC emacs-lisp
   (use-package eglot
     :straight (:type built-in)
+    :hook (prog-mode . eglot-ensure)
     :custom
     (eglot-autoshutdown t)
     (eglot-autoreconnect 3)
     (eglot-sync-connect 1)
+    (eglot-extend-to-xref t)
     (eglot-connect-timeout 10)
     (eglot-send-changes-idle-time 0.5)
     :config
     (add-to-list 'eglot-stay-out-of 'eldoc-documentation-strategy)
 
   ;;; C/C++
-    (add-hook 'c-mode 'eglot-ensure)
-    (add-hook 'c++-mode 'eglot-ensure)
-    (add-hook 'c-ts-mode 'eglot-ensure)
-    (add-hook 'c++-ts-mode 'eglot-ensure)
     (add-to-list 'eglot-server-programs
                  '((c-ts-mode c++-ts-mode c-mode c++-mode)
                    . ("clangd"
@@ -2315,7 +2316,6 @@ The future.
 #+BEGIN_SRC emacs-lisp
   (use-package apheleia
     :straight (apheleia :type git :host github :repo "radian-software/apheleia")
-    :diminish
     :hook prog-mode
     :init
     (apheleia-global-mode +1)
@@ -2329,7 +2329,6 @@ Giving parenthesis some brains.
 
 #+BEGIN_SRC emacs-lisp
   (use-package smartparens
-    :diminish
     :hook prog-mode
     :commands sp-pair sp-local-pair sp-with-modes sp-point-in-comment sp-point-inside-string
     :custom
@@ -2411,57 +2410,59 @@ Giving parenthesis some brains.
     ;; better only use that for the last field.
     ;; These are the defaults:
     (setq mu4e-headers-fields
-      '( (:date          .  25)    ;; alternatively, use :human-date
-         (:flags         .   6)
-         (:from          .  22)
-         (:subject       .  nil))) ;; alternatively, use :thread-subject
+          '( (:date          .  25)    ;; alternatively, use :human-date
+             (:flags         .   6)
+             (:from          .  22)
+             (:subject       .  nil))) ;; alternatively, use :thread-subject
 
     (setq mu4e-headers-auto-update t
-      mu4e-get-mail-command "mbsync --all --config ~/.config/mbsync/config"
-      mu4e-update-interval 300
-      mu4e-alert-max-messages-to-process 1000
-      mu4e-attachment-dir "~/Downloads"
-      mu4e-use-fancy-chars t
-      mu4e-completing-read-function 'completing-read
-      mu4e-index-cleanup t ;; do a full cleanup check
-      mu4e-index-lazy-check t ;; dont consider up-to-date dirs
-      mu4e-index-update-error-warning nil ;; mbsync exists with 1 due to unknown flags on far
-      mu4e-hide-index-messages t ;; do not show any messages
-      mu4e-headers-leave-behavior 'apply
-      mu4e-view-show-images t
-      mu4e-view-image-max-width 400
-      mu4e-headers-skip-duplicates t)
+          mu4e-get-mail-command "mbsync --all --config ~/.config/mbsync/config"
+          mu4e-update-interval 300
+          mu4e-alert-max-messages-to-process 1000
+          mu4e-attachment-dir "~/Downloads"
+          mu4e-use-fancy-chars t
+          mu4e-completing-read-function 'completing-read
+          mu4e-index-cleanup t ;; do a full cleanup check
+          mu4e-index-lazy-check t ;; dont consider up-to-date dirs
+          mu4e-index-update-error-warning nil ;; mbsync exists with 1 due to unknown flags on far
+          mu4e-hide-index-messages t ;; do not show any messages
+          mu4e-headers-leave-behavior 'apply
+          mu4e-view-show-images t
+          mu4e-view-image-max-width 400
+          mu4e-headers-skip-duplicates t)
 
     (setq sendmail-program (executable-find "msmtp")
-      send-mail-function #'message-send-mail-with-sendmail
-      message-sendmail-f-is-evil t
-      message-sendmail-extra-arguments '("--read-envelope-from" "--file=/home/f3sch/.config/msmtp/config")
-      message-send-mail-function #'message-send-mail-with-sendmail)
+          send-mail-function #'message-send-mail-with-sendmail
+          message-sendmail-f-is-evil t
+          message-sendmail-extra-arguments '("--read-envelope-from" "--file=/home/f3sch/.config/msmtp/config")
+          message-send-mail-function #'message-send-mail-with-sendmail)
 
     (setq message-cite-reply-position 'below ;; never top post!
-      message-kill-buffer-on-exit t)
+          message-kill-buffer-on-exit t)
+
+    (add-to-list 'mm-body-charset-encoding-alist '(utf-8 . base64))
 
     (setq mu4e-bookmarks
-      '((:name "Inbox - CERN" :query "maildir:/cern/INBOX" :key ?c)
-        (:name "Inbox - Git" :query "maildir:/git/INBOX AND NOT AND NOT list:bug-gnu-emacs.gnu.org AND NOT list:emacs-devel.gnu.org AND NOT list:help-gnu-emacs.gnu.org AND NOT to:doomemacs@noreply.github.com AND NOT to:AliceO2@noreply.github.com" :key ?g)
-        (:name "Inbox - Web" :query "maildir:/web/INBOX or maildir:/web/Unerw&APw-nscht" :key ?w)
-        (:name "Inbox - Uni" :query "maildir:/uni/INBOX" :key ?u)
-        (:name "Unread Messages" :query "flag:unread AND NOT flag:thrashed" :key ?U)
-        ;; (:name "Linux - Kernel" :query "list:linux-kernel.vger.kernel.org" :key ?K)
-        ;; (:name "Linux - Staging" :query "list:linux-staging.lists.linux.dev" :key ?S)
-        ;; (:name "Linux - Newbies" :query "list:kernelnewbies.kernelnewbies.org" :key ?N)
-        (:name "Emacs - Devel" :query "list:emacs-devel.gnu.org" :key ?E)
-        (:name "Emacs - Help" :query "list:help-gnu-emacs.gnu.org" :key ?H)
-        (:name "Emacs - Bug" :query "list:bug-gnu-emacs.gnu.org" :key ?B)
-        (:name "Alice - O2" :query "to:AliceO2@noreply.github.com" :key ?A)))
+          '((:name "Inbox - CERN" :query "maildir:/cern/INBOX" :key ?c)
+            (:name "Inbox - Git" :query "maildir:/git/INBOX AND NOT AND NOT list:bug-gnu-emacs.gnu.org AND NOT list:emacs-devel.gnu.org AND NOT list:help-gnu-emacs.gnu.org AND NOT to:doomemacs@noreply.github.com AND NOT to:AliceO2@noreply.github.com" :key ?g)
+            (:name "Inbox - Web" :query "maildir:/web/INBOX or maildir:/web/Unerw&APw-nscht" :key ?w)
+            (:name "Inbox - Uni" :query "maildir:/uni/INBOX" :key ?u)
+            (:name "Unread Messages" :query "flag:unread AND NOT flag:thrashed" :key ?U)
+            ;; (:name "Linux - Kernel" :query "list:linux-kernel.vger.kernel.org" :key ?K)
+            ;; (:name "Linux - Staging" :query "list:linux-staging.lists.linux.dev" :key ?S)
+            ;; (:name "Linux - Newbies" :query "list:kernelnewbies.kernelnewbies.org" :key ?N)
+            (:name "Emacs - Devel" :query "list:emacs-devel.gnu.org" :key ?E)
+            (:name "Emacs - Help" :query "list:help-gnu-emacs.gnu.org" :key ?H)
+            (:name "Emacs - Bug" :query "list:bug-gnu-emacs.gnu.org" :key ?B)
+            (:name "Alice - O2" :query "to:AliceO2@noreply.github.com" :key ?A)))
 
     ;; Adding to the known mailing lists.
     (setq mu4e-user-mailing-lists
-      '(("linux-kernel.vger.kernel.org" . "Linux Kernel")
-        ("kernelnewbies.kernelnewbies.org" . "Linux Newbies")
-        ("help-gnu-emacs.gnu.org" . "Emacs Help")
-        ("bug-gnu-emacs.gnu.org" . "Emacs Bugs")
-        ("emacs-devel.gnu.org" . "Emacs Devel")))
+          '(("linux-kernel.vger.kernel.org" . "Linux Kernel")
+            ("kernelnewbies.kernelnewbies.org" . "Linux Newbies")
+            ("help-gnu-emacs.gnu.org" . "Emacs Help")
+            ("bug-gnu-emacs.gnu.org" . "Emacs Bugs")
+            ("emacs-devel.gnu.org" . "Emacs Devel")))
 
     ;; I want to sign my mail.
     (add-hook 'mu4e-compose-mode-hook 'mml-secure-message-sign)
@@ -2469,124 +2470,124 @@ Giving parenthesis some brains.
 
     ;; Do not send to these addresses in wide reply.
     (setq mu4e-compose-reply-ignore-address
-      '("notifications@github\\.com"
-        ".*@noreply\\.github\\.com"))
+          '("notifications@github\\.com"
+            ".*@noreply\\.github\\.com"))
 
 
     (setq mu4e-eldoc-support t)
 
     (setq mu4e-contexts
-      `( ,(make-mu4e-context
-           :name "WEB"
-           :enter-func (lambda () (mu4e-message "Entering WEB context"))
-           :leave-func (lambda () (mu4e-message "Leaving WEB context"))
-           ;; we match based on the contact-fields of the message
-           :match-func (lambda (msg)
-                 (when msg
-                   (mu4e-message-contact-field-matches msg
-                                   :to "felix.schlepper@web.de")))
-           :vars '( ( user-mail-address . "felix.schlepper@web.de"  )
-            ( smtpmail-smtp-user . "felix.schlepper@web.de")
-            ( user-full-name . "Felix Schlepper" )
-            ( message-user-organization . "Private" )
-            ( mu4e-sent-folder . "/web/Sent")
-            ( mu4e-drafts-folder . "/web/Entwurf")
-            ( mu4e-trash-folder . "/web/Trash")
-            ( mu4e-refile-folder . "/web/INBOX")
-            ( mu4e-maildir-shortcuts . (
-                            ("/web/INBOX" . ?i)
-                            ("/web/Trash" . ?t)
-                            ("/web/Sent" . ?S)
-                            ("/web/Unerw&APw-nscht" . ?s)
-                            ("/web/Unbekannt" . ?u)))
-            ( mu4e-compose-signature .
-              (concat
-               "Viele Gruesse\n"
-               "Felix\n"
-               "(GPG: 0x997C87E6BE5239F0)"))))
-         ,(make-mu4e-context
-           :name "UNI"
-           :enter-func (lambda () (mu4e-message "Entering UNI context"))
-           :leave-func (lambda () (mu4e-message "Leaving UNI context"))
-           ;; we match based on the contact-fields of the message
-           :match-func (lambda (msg)
-                 (when msg
-                   (mu4e-message-contact-field-matches msg
-                                   :to "schlepper@stud.uni-heidelberg.de")))
-           :vars '( ( user-mail-address . "schlepper@stud.uni-heidelberg.de"  )
-            ( smtpmail-smtp-user . "schlepper@stud.uni-heidelberg.de")
-            ( user-full-name . "Felix Schlepper" )
-            ( message-user-organization . "UNI" )
-            ( mu4e-sent-folder . "/uni/Sent")
-            ( mu4e-drafts-folder . "/uni/Drafts")
-            ( mu4e-trash-folder . "/uni/Trash")
-            ( mu4e-refile-folder . "/uni/INBOX")
-            ( mu4e-maildir-shortcuts . (
-                            ("/uni/INBOX" . ?i)
-                            ("/uni/Trash" . ?t)
-                            ("/uni/Sent" . ?S)))
-            ( mu4e-compose-signature .
-              (concat
-               "Cheers\n"
-               "Felix\n"
-               "(GPG: 0x997C87E6BE5239F0)"))))
-         ,(make-mu4e-context
-           :name "GIT"
-           :enter-func (lambda () (mu4e-message "Entering GIT context"))
-           :leave-func (lambda () (mu4e-message "Leaving GIT context"))
-           ;; we match based on the contact-fields of the message
-           :match-func (lambda (msg)
-                 (when msg
-                   (mu4e-message-contact-field-matches msg
-                                   :to "f3sch.git@outlook.com")))
-           :vars '( ( user-mail-address . "f3sch.git@outlook.com"  )
-            ( smtpmail-smtp-user . "f3sch.git@outlook.com")
-            ( user-full-name . "Felix Schlepper" )
-            ( message-user-organization . "Git" )
-            ( mu4e-sent-folder . "/git/Sent")
-            ( mu4e-drafts-folder . "/git/Drafts")
-            ( mu4e-trash-folder . "/git/Deleted")
-            ( mu4e-refile-folder . "/git/INBOX")
-            ( mu4e-maildir-shortcuts . (
-                            ("/git/INBOX" . ?i)
-                            ("/git/Deleted" . ?t)
-                            ("/git/Sent" . ?S)
-                            ("/git/Junk" . ?s)
-                            ("/git/Archive" . ?a)
-                            ("/git/Notes" . ?n)
-                            ("/git/Outbox" . ?o)
-                            ("/git/Kernelnewbies" . ?k)))
-            ( mu4e-compose-signature .
-              (concat
-               "Cheers\n"
-               "Felix\n"
-               "(GPG: 0x997C87E6BE5239F0)"))))
-         ,(make-mu4e-context
-           :name "CERN"
-           :enter-func (lambda () (mu4e-message "Entering CERN context"))
-           :leave-func (lambda () (mu4e-message "Leaving CERN context"))
-           ;; we match based on the contact-fields of the message
-           :match-func (lambda (msg)
-                 (when msg
-                   (mu4e-message-contact-field-matches msg
-                                   :to "felix.schlepper@cern.ch")))
-           :vars '( ( user-mail-address . "felix.schlepper@cern.ch"  )
-            ( smtpmail-smtp-user . "felix.schlepper@cern.ch")
-            ( user-full-name . "Felix Schlepper" )
-            ( message-user-organization . "CERN" )
-            ( mu4e-sent-folder . "/cern/Sent Items")
-            ( mu4e-drafts-folder . "/cern/Drafts")
-            ( mu4e-trash-folder . "/cern/Deleted Items")
-            ( mu4e-refile-folder . "/cern/INBOX")
-            ( mu4e-maildir-shortcuts . (
-                            ("/git/INBOX" . ?i)
-                            ("/git/Deleted Items" . ?t)
-                            ("/git/Sent Items" . ?s)))
-            ( mu4e-compose-signature .
-              (concat
-               "Cheers\n"
-               "Felix\n"
-               "(GPG: 0x997C87E6BE5239F0)"))))))
+          `( ,(make-mu4e-context
+               :name "WEB"
+               :enter-func (lambda () (mu4e-message "Entering WEB context"))
+               :leave-func (lambda () (mu4e-message "Leaving WEB context"))
+               ;; we match based on the contact-fields of the message
+               :match-func (lambda (msg)
+                             (when msg
+                               (mu4e-message-contact-field-matches msg
+                                                                   :to "felix.schlepper@web.de")))
+               :vars '( ( user-mail-address . "felix.schlepper@web.de"  )
+                        ( smtpmail-smtp-user . "felix.schlepper@web.de")
+                        ( user-full-name . "Felix Schlepper" )
+                        ( message-user-organization . "Private" )
+                        ( mu4e-sent-folder . "/web/Sent")
+                        ( mu4e-drafts-folder . "/web/Entwurf")
+                        ( mu4e-trash-folder . "/web/Trash")
+                        ( mu4e-refile-folder . "/web/INBOX")
+                        ( mu4e-maildir-shortcuts . (
+                                                    ("/web/INBOX" . ?i)
+                                                    ("/web/Trash" . ?t)
+                                                    ("/web/Sent" . ?S)
+                                                    ("/web/Unerw&APw-nscht" . ?s)
+                                                    ("/web/Unbekannt" . ?u)))
+                        ( mu4e-compose-signature .
+                          (concat
+                           "Viele Gruesse\n"
+                           "Felix\n"
+                           "(GPG: 0x997C87E6BE5239F0)"))))
+             ,(make-mu4e-context
+               :name "UNI"
+               :enter-func (lambda () (mu4e-message "Entering UNI context"))
+               :leave-func (lambda () (mu4e-message "Leaving UNI context"))
+               ;; we match based on the contact-fields of the message
+               :match-func (lambda (msg)
+                             (when msg
+                               (mu4e-message-contact-field-matches msg
+                                                                   :to "schlepper@stud.uni-heidelberg.de")))
+               :vars '( ( user-mail-address . "schlepper@stud.uni-heidelberg.de"  )
+                        ( smtpmail-smtp-user . "schlepper@stud.uni-heidelberg.de")
+                        ( user-full-name . "Felix Schlepper" )
+                        ( message-user-organization . "UNI" )
+                        ( mu4e-sent-folder . "/uni/Sent")
+                        ( mu4e-drafts-folder . "/uni/Drafts")
+                        ( mu4e-trash-folder . "/uni/Trash")
+                        ( mu4e-refile-folder . "/uni/INBOX")
+                        ( mu4e-maildir-shortcuts . (
+                                                    ("/uni/INBOX" . ?i)
+                                                    ("/uni/Trash" . ?t)
+                                                    ("/uni/Sent" . ?S)))
+                        ( mu4e-compose-signature .
+                          (concat
+                           "Cheers\n"
+                           "Felix\n"
+                           "(GPG: 0x997C87E6BE5239F0)"))))
+             ,(make-mu4e-context
+               :name "GIT"
+               :enter-func (lambda () (mu4e-message "Entering GIT context"))
+               :leave-func (lambda () (mu4e-message "Leaving GIT context"))
+               ;; we match based on the contact-fields of the message
+               :match-func (lambda (msg)
+                             (when msg
+                               (mu4e-message-contact-field-matches msg
+                                                                   :to "f3sch.git@outlook.com")))
+               :vars '( ( user-mail-address . "f3sch.git@outlook.com"  )
+                        ( smtpmail-smtp-user . "f3sch.git@outlook.com")
+                        ( user-full-name . "Felix Schlepper" )
+                        ( message-user-organization . "Git" )
+                        ( mu4e-sent-folder . "/git/Sent")
+                        ( mu4e-drafts-folder . "/git/Drafts")
+                        ( mu4e-trash-folder . "/git/Deleted")
+                        ( mu4e-refile-folder . "/git/INBOX")
+                        ( mu4e-maildir-shortcuts . (
+                                                    ("/git/INBOX" . ?i)
+                                                    ("/git/Deleted" . ?t)
+                                                    ("/git/Sent" . ?S)
+                                                    ("/git/Junk" . ?s)
+                                                    ("/git/Archive" . ?a)
+                                                    ("/git/Notes" . ?n)
+                                                    ("/git/Outbox" . ?o)
+                                                    ("/git/Kernelnewbies" . ?k)))
+                        ( mu4e-compose-signature .
+                          (concat
+                           "Cheers\n"
+                           "Felix\n"
+                           "(GPG: 0x997C87E6BE5239F0)"))))
+             ,(make-mu4e-context
+               :name "CERN"
+               :enter-func (lambda () (mu4e-message "Entering CERN context"))
+               :leave-func (lambda () (mu4e-message "Leaving CERN context"))
+               ;; we match based on the contact-fields of the message
+               :match-func (lambda (msg)
+                             (when msg
+                               (mu4e-message-contact-field-matches msg
+                                                                   :to "felix.schlepper@cern.ch")))
+               :vars '( ( user-mail-address . "felix.schlepper@cern.ch"  )
+                        ( smtpmail-smtp-user . "felix.schlepper@cern.ch")
+                        ( user-full-name . "Felix Schlepper" )
+                        ( message-user-organization . "CERN" )
+                        ( mu4e-sent-folder . "/cern/Sent Items")
+                        ( mu4e-drafts-folder . "/cern/Drafts")
+                        ( mu4e-trash-folder . "/cern/Deleted Items")
+                        ( mu4e-refile-folder . "/cern/INBOX")
+                        ( mu4e-maildir-shortcuts . (
+                                                    ("/git/INBOX" . ?i)
+                                                    ("/git/Deleted Items" . ?t)
+                                                    ("/git/Sent Items" . ?s)))
+                        ( mu4e-compose-signature .
+                          (concat
+                           "Cheers\n"
+                           "Felix\n"
+                           "(GPG: 0x997C87E6BE5239F0)"))))))
 
     ;; set `mu4e-context-policy` and `mu4e-compose-policy` to tweak when
     ;; mu4e should guess or ask the correct context, e.g.
