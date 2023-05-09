@@ -6,8 +6,8 @@ This file is loaded before the package system and GUI is initialized.
 A detailed description is [[elisp:(info "(emacs) Early Init File")][here]].
 
 ** Small Startup Optimizations
-This avoids garabage collection during startup.
-Afterward, sensible defaults are renabled.
+This avoids garbage collection during startup.
+Afterward, sensible defaults are re-enabled.
 
 #+begin_src emacs-lisp :tangle early-init.el
   (defvar file-name-handler-alist-old file-name-handler-alist)
@@ -145,6 +145,14 @@ For now I use straight.el as a package manager.
         url-history-file (expand-file-name "url/history" +cache-dir))
 #+end_src
 
+** Use-Package
+#+begin_src emacs-lisp
+  (setq use-package-enable-imenu-support t
+        use-package-verbose (not (bound-and-true-p byte-compile-current-file))
+        use-package-expand-minimally t
+        use-package-compute-statistics nil)
+  (setq byte-compile-warnings '(cl-functions))
+#+end_src
 
 ** No-littering
 Stop emacs from littering with sensible defaults to paths.
@@ -174,22 +182,6 @@ to optimize startup times.
     ;; To disable collection of benchmark data after init is done.
     (add-hook 'after-init-hook 'benchmark-init/deactivate))
 #+END_SRC
-
-** Packages
-#+begin_src emacs-lisp
-  (use-package diminish)
-    ;;; Use-package
-  (setq use-package-enable-imenu-support t
-        use-package-verbose (not (bound-and-true-p byte-compile-current-file))
-        use-package-expand-minimally t
-        use-package-compute-statistics nil)
-  (setq byte-compile-warnings '(cl-functions))
-
-  (use-package hydra)
-  (use-package popup)
-  (use-package posframe)
-  (use-package diminish)
-#+end_src
 
 ** Load Time
 Although I do not care about startup time, I want to see it.
