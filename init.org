@@ -1602,6 +1602,14 @@ Possibly the greatest package.
 
 ** Helpful
 Help me.
+#+BEGIN_SRC emacs-lisp
+  (use-package help
+    :straight (:type built-in)
+    :custom
+    (help-window-select t)
+    (help-enable-variable-value-editing t))
+#+END_SRC
+
 
 #+BEGIN_SRC emacs-lisp
   (use-package helpful
@@ -3211,6 +3219,22 @@ take a screenshot of a specific area of a buffer and make it look nice.
     :infix "g"
     "" '(:ignore t :wk "Git")
     "g" '(magit-status :wk "Status"))
+#+END_SRC
+
+*** Help
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "h"
+    "" '(:ignore t :wk "Help")
+    "h" '(helpful-at-point :wk "At Point")
+    "c" '(helpful-callable :wk "Callable")
+    "C" '(helpful-command :wk "Command")
+    "s" '(helpful-symbol :wk "Symbol")
+    "f" '(helpful-function :wk "Function")
+    "v" '(helpful-variable :wk "Variable")
+    "V" '(helpful-visit-reference :wk "Visit")
+    "m" '(helpful-macro :wk "Macro")
+    "k" '(helpful-key :wk "Key"))
 #+END_SRC
 
 *** Project
