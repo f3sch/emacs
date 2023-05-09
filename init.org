@@ -2091,9 +2091,11 @@ Follow symlinks
 
 #+BEGIN_SRC emacs-lisp
   (use-package vc
+    :straight (:type built-in)
     :custom
     (vc-command-messages t)
     (vc-follow-symlinks t)
+    (vc-allow-async-revert t)
     (vc-handled-backends '(Git))
     (vc-git-diff-switches '("-w" "-U3"))
     (vc-make-backup-files t))
@@ -2251,6 +2253,54 @@ them, and fork projects among other things.
       "er" #'forge-edit-topic-review-requests
       "es" #'forge-edit-topic-state
       "et" #'forge-edit-topic-title))
+#+END_SRC
+
+** Git Gutter
+#+BEGIN_SRC emacs-lisp
+  (use-package git-gutter
+    :custom
+    (git-gutter:hide-gutter t)
+    (git-gutter:update-interval 60)
+    :config
+    (add-to-list 'git-gutter:update-hooks 'focus-in-hook)
+    (global-git-gutter-mode t))
+
+  (use-package git-gutter-fringe
+    :after git-gutter
+    :config
+    (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+#+END_SRC
+
+** EDiff
+Visual diff interface
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ediff
+    :straight (:type built-in)
+    ;; Restore window config after quitting ediff
+    :hook ((ediff-before-setup . ediff-save-window-conf)
+           (ediff-quit         . ediff-restore-window-conf))
+    :config
+    (defvar local-ediff-saved-window-conf nil)
+
+    (defun ediff-save-window-conf ()
+      (setq local-ediff-saved-window-conf (current-window-configuration)))
+
+    (defun ediff-restore-window-conf ()
+      (when (window-configuration-p local-ediff-saved-window-conf)
+        (set-window-configuration local-ediff-saved-window-conf)))
+    :custom
+    (ediff-highlight-all-diffs t)
+    (ediff-window-setup-function 'ediff-setup-windows-plain)
+    (ediff-split-window-function 'split-window-horizontally)
+    (ediff-merge-split-window-function 'split-window-horizontally))
+#+END_SRC
+
+** Git Config Modes
+#+BEGIN_SRC emacs-lisp
+  (use-package git-modes)
 #+END_SRC
 
 * Undo
@@ -3168,6 +3218,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
     :infix "b"
     "" '(:ignore t :wk "Buffers")
     "b" '(persp-switch-to-buffer* :wk "Switch")
+    "B" '(ibuffer :wk "All Buffers")
     "k" '(persp-kill-buffer* :wk "Kill"))
 #+END_SRC
 
@@ -3218,6 +3269,10 @@ take a screenshot of a specific area of a buffer and make it look nice.
   (+leader-key
     :infix "g"
     "" '(:ignore t :wk "Git")
+    "s" '(git-gutter:stage-hunk :wk "Stage Hunk")
+    "r" '(git-gutter:revert-hunk :wk "Revert Hunk")
+    "n" '(git-gutter:next-hunk :wk "Next Hunk")
+    "p" '(git-gutter:previous-hunk :wk "Previous Hunk")
     "g" '(magit-status :wk "Status"))
 #+END_SRC
 
@@ -3314,6 +3369,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
     :infix "TAB"
     "" '(:ignore t :wk "Workspaces")
     "b" '(persp-switch-to-buffer :wk "Switch to Buffer")
+    "F" '(make-frame :wk "New Frame")
     "n" '(persp-switch :wk "New")
     "m" '(persp-merge :wk "Merge")
     "u" '(persp-unmerge :wk "Unmerge")
