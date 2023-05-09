@@ -1252,12 +1252,24 @@ Nice visual features.
 
     ;; Hooks that run before/after the modeline version string is updated
     (doom-modeline-before-update-env-hook nil)
-    (doom-modeline-after-update-env-hook nil))
+    (doom-modeline-after-update-env-hook nil)
+    :config
+    (defun doom-modeline-conditional-buffer-encoding ()
+      "We expect the encoding to be LF UTF-8, so only show the modeline when this is not the case"
+      (setq-local doom-modeline-buffer-encoding
+                  (unless (and (memq (plist-get (coding-system-plist buffer-file-coding-system) :category)
+                                     '(coding-category-undecided coding-category-utf-8))
+                               (not (memq (coding-system-eol-type buffer-file-coding-system) '(1 2))))
+                    t)))
+
+    (add-hook 'after-change-major-mode-hook #'doom-modeline-conditional-buffer-encoding))
 #+END_SRC
 
 ** Theme
+*** Doom
 #+BEGIN_SRC emacs-lisp
   (use-package doom-themes
+    :disabled t
     :ensure t
     :config
     ;; Global settings (defaults)
@@ -1274,6 +1286,56 @@ Nice visual features.
     (doom-themes-treemacs-config)
     ;; Corrects (and improves) org-mode's native fontification.
     (doom-themes-org-config))
+#+END_SRC
+
+*** Modus
+#+BEGIN_SRC emacs-lisp
+  (use-package modus-themes
+    :straight (:type built-in)
+    :init (require-theme 'modus-themes)
+    :config
+    ;; In all of the following, WEIGHT is a symbol such as `semibold',
+    ;; `light', `bold', or anything mentioned in `modus-themes-weights'.
+    (setq modus-themes-italic-constructs t
+          modus-themes-bold-constructs nil
+          modus-themes-mixed-fonts t
+          modus-themes-variable-pitch-ui nil
+          modus-themes-custom-auto-reload t
+          modus-themes-disable-other-themes t
+
+          ;; Options for `modus-themes-prompts' are either nil (the
+          ;; default), or a list of properties that may include any of those
+          ;; symbols: `italic', `WEIGHT'
+          modus-themes-prompts '(italic bold)
+
+          ;; The `modus-themes-completions' is an alist that reads two
+          ;; keys: `matches', `selection'.  Each accepts a nil value (or
+          ;; empty list) or a list of properties that can include any of
+          ;; the following (for WEIGHT read further below):
+          ;;
+          ;; `matches'   :: `underline', `italic', `WEIGHT'
+          ;; `selection' :: `underline', `italic', `WEIGHT'
+          modus-themes-completions
+          '((matches . (extrabold))
+            (selection . (semibold italic text-also)))
+
+          modus-themes-org-blocks 'gray-background ; {nil,'gray-background,'tinted-background}
+
+          ;; The `modus-themes-headings' is an alist: read the manual's
+          ;; node about it or its doc string.  Basically, it supports
+          ;; per-level configurations for the optional use of
+          ;; `variable-pitch' typography, a height value as a multiple of
+          ;; the base font size (e.g. 1.5), and a `WEIGHT'.
+          modus-themes-headings
+          '((1 . (variable-pitch 1.5))
+            (2 . (1.3))
+            (agenda-date . (1.3))
+            (agenda-structure . (variable-pitch light 1.8))
+            (t . (1.1))))
+
+    ;;; Load Theme and set Toggle
+    (load-theme 'modus-operandi)
+    (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
 #+END_SRC
 
 ** Zoom
