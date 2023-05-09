@@ -24,7 +24,7 @@ clean:
 	$(RM) *.elc
 	$(RM) lisp/*.elc
 	$(RM) tmp/
-	$(RM) var/
+	$(RM) var/ etc/
 	$(RM) straight/
 	$(RM) eln-cache/
 	$(RM) parinfer-rust/

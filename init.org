@@ -27,15 +27,19 @@ Afterward, sensible defaults are renabled.
 Asynchronous compilation and speed, enabled.
 
 #+begin_src emacs-lisp :tangle early-init.el
-  (let ((path (expand-file-name "eln-cache/" user-emacs-directory)))
+  (let ((path (expand-file-name "eln-cache/" (expand-file-name "emacs/" (or (getenv "XDG_CACHE_HOME") "~/.cache")))))
     (setq native-comp-eln-load-path (list path)
-      native-compile-target-directory path))
+          native-compile-target-directory path))
   (setq native-comp-async-report-warnings-errors nil ;; Silence compiler warnings as they can be pretty disruptive
-    native-compile-prune-cache t
-    native-comp-speed 2
-    native-comp-deferred-compilation	 nil)  ;; Make native compilation happens asynchronously
+        native-compile-prune-cache t
+        native-comp-speed 2
+        native-comp-deferred-compilation	 nil)  ;; Make native compilation happens asynchronously
+  (when (fboundp 'startup-redirect-eln-cache)
+    (startup-redirect-eln-cache
+     (convert-standard-filename
+      (expand-file-name  "eln-cache/" (expand-file-name "emacs/" (or (getenv "XDG_CACHE_HOME") "~/.cache"))))))
 
-  (setq load-prefer-newer noninteractive)
+  (setq load-prefer-newer t)
 #+end_src
 
 ** Unstyled Emacs
@@ -83,32 +87,79 @@ Required by straight.el.
 #+end_src
 
 * Startup
+** Variables
+A few useful variables to have.
+
+#+BEGIN_SRC emacs-lisp
+  (defvar +config-file (file-name-concat user-emacs-directory "init.org")
+    "User config file.")
+
+  (defvar +cache-dir
+    (expand-file-name "emacs/" (or (getenv "XDG_CACHE_HOME") "~/.cache"))
+    "Cache files represent 'non-essential' data that should not be
+  problematic when deleted, lack portability and are regenerated
+  when needed without user input.")
+
+  (defvar +user-dir
+    (expand-file-name "emacs/" (or (getenv "XDG_CACHE_HOME") "~/.config"))
+    "Where your private configuration is placed.")
+
+  (defvar +data-dir
+          (expand-file-name "emacs/" (or (getenv-internal "XDG_DATA_HOME") "~/.local/share"))
+  "Data files contain shared and long-lived data that Emacs, and their
+  packages require to function correctly or at all.
+
+  Use this for: packages, server binaries, package source, pulled module
+  libraries, generated files for profiles, profiles themselves,
+  autoloads/loaddefs, etc.")
+#+END_SRC
+
 ** Bootstrap straight.el
 For now I use straight.el as a package manager.
 
 #+begin_src emacs-lisp
-    (defvar bootstrap-version)
-    (let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 6))
-      (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-      (load bootstrap-file nil 'nomessage))
-    (setq straight-use-package-by-default t)
+  (setq straight-use-package-by-default t
+        straight-base-dir +data-dir
+        straight-cache-autoloads t
+        straight-enable-package-integration nil
+        straight-build-dir (format "build-%s" emacs-version)
+        straight-vc-git-default-clone-depth '(1 single-branch))
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" straight-base-dir))
+        (bootstrap-version 6))
+    (unless (file-exists-p bootstrap-file)
+    (message "File does not exist; installing...")
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (message bootstrap-file)
+    (load bootstrap-file nil 'nomessage))
 
-      ;;; Paths
-    (setq package-user-dir (expand-file-name "packages" user-emacs-directory)
-      url-history-file (expand-file-name "url/history" user-emacs-directory)
-      custom-file (expand-file-name "custom.el" user-emacs-directory))
-
-
-    (use-package diminish)
+    ;;; Paths
+  (setq package-user-dir (expand-file-name "packages" +data-dir)
+        package-gnupghome-dir (expand-file-name "gpg" package-user-dir)
+        url-history-file (expand-file-name "url/history" +cache-dir))
 #+end_src
+
+
+** No-littering
+Stop emacs from littering with sensible defaults to paths.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package no-littering
+    :straight (no-littering :type git :host github :repo "emacscollective/no-littering")
+    :diminish
+    :init
+    (setq no-littering-etc-directory (expand-file-name "etc/" +cache-dir)
+          no-littering-var-directory (expand-file-name "var/" +cache-dir)
+          custom-file (no-littering-expand-etc-file-name "custom.el"))
+    :config
+    (no-littering-theme-backups))
+#+END_SRC
 
 ** Benchmark
 This is a simple benchmark of calls to Emacs require and load functions. It can
@@ -124,6 +175,21 @@ to optimize startup times.
     (add-hook 'after-init-hook 'benchmark-init/deactivate))
 #+END_SRC
 
+** Packages
+#+begin_src emacs-lisp
+  (use-package diminish)
+    ;;; Use-package
+  (setq use-package-enable-imenu-support t
+        use-package-verbose (not (bound-and-true-p byte-compile-current-file))
+        use-package-expand-minimally t
+        use-package-compute-statistics nil)
+  (setq byte-compile-warnings '(cl-functions))
+
+  (use-package hydra)
+  (use-package popup)
+  (use-package posframe)
+  (use-package diminish)
+#+end_src
 
 ** Load Time
 Although I do not care about startup time, I want to see it.
@@ -310,32 +376,46 @@ Mostly taken from doomemacs.
 
       In tty Emacs, messages are suppressed completely."
     (quiet! (apply fn args)))
-#+END_SRC
+  ;;; Definers
+  (defmacro defadvice! (symbol arglist &optional docstring &rest body)
+    "Define an advice called SYMBOL and add it to PLACES.
 
-** Config File
-A useful variable to have.
+  ARGLIST is as in `defun'. WHERE is a keyword as passed to `advice-add', and
+  PLACE is the function to which to add the advice, like in `advice-add'.
+  DOCSTRING and BODY are as in `defun'.
 
-#+BEGIN_SRC emacs-lisp
-  (defvar +config-file (file-name-concat user-emacs-directory "init.org")
-    "User config file.")
-#+END_SRC
+  \(fn SYMBOL ARGLIST &optional DOCSTRING &rest [WHERE PLACES...] BODY\)"
+    (declare (doc-string 3) (indent defun))
+    (unless (stringp docstring)
+      (push docstring body)
+      (setq docstring nil))
+    (let (where-alist)
+      (while (keywordp (car body))
+        (push `(cons ,(pop body) (ensure-list ,(pop body)))
+              where-alist))
+      `(progn
+         (defun ,symbol ,arglist ,docstring ,@body)
+         (dolist (targets (list ,@(nreverse where-alist)))
+           (dolist (target (cdr targets))
+             (advice-add target (car targets) #',symbol))))))
 
-** No-littering
-Stop emacs from littering with sensible defaults to paths.
+  (defmacro undefadvice! (symbol _arglist &optional docstring &rest body)
+    "Undefine an advice called SYMBOL.
 
-#+BEGIN_SRC emacs-lisp
-  (use-package no-littering
-    :demand t
-    :diminish
-    :config
-    ;; save auto-save file if needed
-    (setq auto-save-file-name-transforms
-      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+  This has the same signature as `defadvice!' an exists as an easy undefiner when
+  testing advice (when combined with `rotate-text').
 
-    ;; exclude these in recentf
-    (with-eval-after-load 'recentf
-      (appendq! recentf-exclude
-        `(,no-littering-var-directory ,no-littering-etc-directory))))
+  \(fn SYMBOL ARGLIST &optional DOCSTRING &rest [WHERE PLACES...] BODY\)"
+    (declare (doc-string 3) (indent defun))
+    (let (where-alist)
+      (unless (stringp docstring)
+        (push docstring body))
+      (while (keywordp (car body))
+        (push `(cons ,(pop body) (ensure-list ,(pop body)))
+              where-alist))
+      `(dolist (targets (list ,@(nreverse where-alist)))
+         (dolist (target (cdr targets))
+           (advice-remove target #',symbol)))))
 #+END_SRC
 
 ** Backups
@@ -344,21 +424,15 @@ However, I still feel safer when having a backup.  Save backup files to a
 dedicated directory.
 
 #+BEGIN_SRC emacs-lisp
-(setq backup-directory-alist '(("." . "~/.cache/emacs/backups")))
-(with-eval-after-load 'tramp
-  (add-to-list 'tramp-backup-directory-alist
-           (cons tramp-file-name-regexp nil)))
-(setq delete-old-versions t)
-;; Backup also files under VC.
-(setq version-control t
-      vc-make-backup-files t)
-;; Make numeric backup versions unconditionally.
-;; auto-save-mode doesn't create the path automatically!
-(make-directory (expand-file-name "tmp/auto-saves/" user-emacs-directory) t)
-(setq auto-save-list-file-prefix
-      (expand-file-name "tmp/auto-saves/sessions/" user-emacs-directory))
-(setq auto-save-file-name-transforms
-      `((".*" ,(expand-file-name "tmp/auto-saves/" user-emacs-directory) t)))
+  (with-eval-after-load 'tramp
+    (add-to-list 'tramp-backup-directory-alist
+             (cons tramp-file-name-regexp nil)))
+  (setq delete-old-versions t)
+  ;; Backup also files under VC.
+  (setq version-control t
+        vc-make-backup-files t)
+  (setq auto-save-list-file-prefix
+        (no-littering-expand-var-file-name "auto-saves/sessions/"))
 #+END_SRC
 
 ** Recent Files
@@ -371,7 +445,7 @@ I do not need to know when it does...
     :hook (after-init . recentf-mode)
     :custom
     (recentf-max-saved-items 300)
-
+    (recentf-save-file (concat +cache-dir "recentf"))
     (recentf-exclude
      '("\\.?cache" ".cask" "url" "COMMIT_EDITMSG\\'" "bookmarks"
        "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
@@ -382,6 +456,8 @@ I do not need to know when it does...
        (lambda (file) (file-in-directory-p file package-user-dir))))
     :config
 
+    ;; exclude no-littering in recentf
+    (appendq! recentf-exclude '(,no-littering-var-directory ,no-littering-etc-directory))
     (advice-add 'recentf-save-list :around #'doom-shut-up-a)
     (push (expand-file-name recentf-save-file) recentf-exclude)
     (add-to-list 'recentf-filename-handlers #'abbreviate-file-name)
@@ -433,6 +509,7 @@ Saves the last position of pointer in a file.
     :straight (:type built-in)
     :hook (after-init . save-place-mode)
     :custom
+    (save-place-file (concat +cache-dir "saveplace"))
     (save-place-forget-unreadable-files t))
 #+END_SRC
 
@@ -780,6 +857,7 @@ Persistent History, have some persistency.
     :straight (:type built-in)
     :hook (after-init . savehist-mode)
     :custom
+    (savehist-file (concat +cache-dir "savehist"))
     (savehist-additional-variables '(mark-ring global-mark-ring
                            search-ring regexp-search-ring
                            register-alist
@@ -1218,7 +1296,8 @@ Zoom using =CTRL= +/-/0.
     :custom
     (persp-sort 'access)
     (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
-    (persp-state-default-file (file-name-concat user-emacs-directory "perspectives"))
+    (persp-state-default-file (file-name-concat +data-dir "perspectives"))
+    (persp-save-dir (concat +data-dir "workspaces/"))
     :hook (kill-emacs . persp-state-save)
     :init
     (persp-mode))
@@ -1969,6 +2048,9 @@ Possibly the most convincing reason to use EMACS? No, seriously it is awesome!
     (magit-clone-default-directory "~/git/")
     ;; Show more transient levels
     (transient-default-level 7)
+    (transient-levels-file (concat +data-dir "transient/levels"))
+    (transient-values-file (concat +data-dir "transient/values"))
+    (transient-history-file (concat +data-dir "transient/history"))
     ;; Diffing
     ;; Show granular hunks
     (magit-diff-refine-hunk 'all)
@@ -2076,6 +2158,8 @@ them, and fork projects among other things.
     :init
     (setq forge-add-default-bindings nil)
     (evil-collection-forge-setup)
+    :custom
+    (forge-database-file (concat +data-dir "forge/forge-database.sqlite"))
     :general
     (+local-leader-key
       :keymaps 'forge-topic-mode-map
@@ -2100,40 +2184,56 @@ Hence Something visually appealing.
 
 #+BEGIN_SRC emacs-lisp
   (use-package undo-tree
-    :demand t
+    :defer t
     :diminish
-    :custom
-    ;; Show a diff window displaying changes between undo nodes.
-    (undo-tree-visualizer-diff t)
-    ;; Prevent undo tree files from polluting your git repo
-    (undo-tree-history-directory-alist '(("." . "~/.emacs.d/var/undo-tree-hist")))
+    :init
+    (progn
+      (setq undo-tree-visualizer-timestamps t
+            undo-tree-visualizer-diff t
+            ;; See `vim-style-enable-undo-region'.
+            undo-tree-enable-undo-in-region t
+            undo-tree-auto-save-history t
+            ;; 10X bump of the undo limits to avoid issues with premature
+            ;; Emacs GC which truncages the undo history very aggresively
+            undo-limit 800000
+            undo-strong-limit 12000000
+            undo-outer-limit 120000000
+            undo-tree-history-directory-alist
+            `(("." . ,(let ((dir (expand-file-name "undo-tree-history" +cache-dir)))
+                        (if (file-exists-p dir)
+                            (unless (file-accessible-directory-p dir)
+                              (warn "Cannot access directory `%s'.
+   Perhaps you don't have required permissions, or it's not a directory.
+   See variable `undo-tree-history-directory-alist'." dir))
+                          (make-directory dir))
+                        dir))))
+      (global-undo-tree-mode))
     :config
-    (global-undo-tree-mode +1)
-    (setq undo-tree-visualizer-diff t
-          undo-tree-auto-save-history t
-          undo-tree-visualizer-timestamps t
-          undo-tree-enable-undo-in-region t
-          undo-limit 800000           ; 800kb (default is 160kb)
-          undo-strong-limit 12000000  ; 12mb  (default is 240kb)
-          undo-outer-limit 128000000)
+    ;; Compress undo-tree history files with zstd, if available. File size isn't
+    ;; the (only) concern here: the file IO barrier is slow for Emacs to cross;
+    ;; reading a tiny file and piping it in-memory through zstd is *slightly*
+    ;; faster than Emacs reading the entire undo-tree file from the get go (on
+    ;; SSDs). Whether or not that's true in practice, we still enjoy zstd's ~80%
+    ;; file savings (these files add up over time and zstd is so incredibly fast).
+    (when (executable-find "zstd")
+      (defadvice! +undo--append-zst-extension-to-file-name-a (file)
+        :filter-return #'undo-tree-make-history-save-file-name
+        (concat file ".zst")))
+
+    ;; Strip text properties from undo-tree data to stave off bloat. File size
+    ;; isn't the concern here; undo cache files bloat easily, which can cause
+    ;; freezing, crashes, GC-induced stuttering or delays when opening files.
+    (defadvice! +undo--strip-text-properties-a (&rest _)
+      :before #'undo-list-transfer-to-tree
+      (dolist (item buffer-undo-list)
+        (and (consp item)
+             (stringp (car item))
+             (setcar item (substring-no-properties (car item))))))
+
     ;; Undo-tree is too chatty about saving its history files. This doesn't
     ;; totally suppress it logging to *Messages*, it only stops it from appearing
     ;; in the echo-area.
-    (advice-add #'undo-tree-save-history :around #'doom-shut-up-a)
-
-    ;; An interesting behavior from DoomEmacs is to compress the history files
-    ;; with zstd when it is present on the system. Not only do we enjoy much
-    ;; smaller files (according to DoomEmacs, we get something like 80% file
-    ;; savings), Emacs can load them much faster than the regular files. Sure, it
-    ;; uses more CPU time uncompressing these files, but it’s insignificant, and
-    ;; it’s still faster than loading a heavier file.
-    (when (executable-find "zstd")
-      (defun my/undo-tree-append-zst-to-filename (filename)
-        "Append .zst to the FILENAME in order to compress it."
-        (concat filename ".zst"))
-      (advice-add 'undo-tree-make-history-save-file-name
-                  :filter-return
-                  #'my/undo-tree-append-zst-to-filename)))
+    (advice-add #'undo-tree-save-history :around #'doom-shut-up-a))
 #+END_SRC
 
 * Org
@@ -2556,6 +2656,7 @@ I’ll activate the modeline notification.
     :if (display-graphic-p)
     :init (dirvish-override-dired-mode)
     :custom
+    (dirvish-cache-dir (concat +cache-dir "dirvish"))
     (dirvish-quick-access-entries
      '(("h" "~/" "Home")
        ("d" "~/Downloads/" "Downloads")
