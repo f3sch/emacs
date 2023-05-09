@@ -3077,6 +3077,26 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "k" '(persp-kill-buffer* :wk "Kill"))
 #+END_SRC
 
+*** Code
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "c"
+    "" '(:ignore t :wk "Code")
+    "d" '(eglot-find-declaration :wk "Find Declaration")
+    "f" '(eglot-format :wk "Format Region")
+    "s" '(consult-eglot-symbols :wk "Show Symbols")
+    "F" '(eglot-format-buffer :wk "Format Buffer")
+    "t" '(eglot-find-typeDefinition :wk "Find Definition")
+    "i" '(eglot-find-implementation :wk "Find Implementation")
+    "r" '(eglot-rename :wk "Rename")
+    "e" '(:ignore t :wk "Eglot")
+    "er" '(eglot-reconnect :wk "Reconnect")
+    "es" '(eglot-shutdown :wk "Shutdown")
+    "eS" '(eglot-shutdown-all :wk "Shutdown All")
+    "ec" '(eglot-show-workspace-configuration :wk "Show Configuration")
+    "a" '(eglot-code-actions :wk "Code Actions"))
+#+END_SRC
+
 *** Files
 #+BEGIN_SRC emacs-lisp
   (+leader-key
