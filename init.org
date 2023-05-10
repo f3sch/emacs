@@ -913,7 +913,7 @@ Motivation is not living in the 80s, we have the memory. This should not
 increase the pipe maximal size!
 
 #+BEGIN_SRC emacs-lisp
-  (setq read-process-output-max (* 2 1024 1024))
+  (setq read-process-output-max (* 1024 1024))
 #+END_SRC
 
 ** Auto revert
