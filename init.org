@@ -1540,10 +1540,29 @@ These settings do the following:
    prepared for it in advance. (If this is a step too far, then replace
    `display-buffer-same-window` with `display-buffer-pop-up-window`.)
 
+** Minibuffer
+#+BEGIN_SRC emacs-lisp
+  (use-package minibuffer
+    :straight (:type built-in)
+    :init ;; Some more sage advice from the demigods at [[https://github.com/hlissner/doom-emacs/blob/develop/docs/faq.org#how-does-doom-start-up-so-quickly][doom]].
+    (defun defer-garbage-collection+ ()
+      (setq gc-cons-threshold most-positive-fixnum))
+
+    (defun restore-garbage-collection+ ()
+      ;; Deferred so that commands launched immediately after will enjoy the
+      ;; benefits.
+      (run-at-time
+       1 nil (lambda () (setq gc-cons-threshold (* 16 1024 1024))))
+
+    (add-hook 'minibuffer-setup-hook #'defer-garbage-collection+)
+    (add-hook 'minibuffer-exit-hook #'restore-garbage-collection+))
+#+END_SRC
+
 * Evil
 At some point I got used to =vim= keybindings.
 Now, I cannot go back.
 
+** Base
 #+BEGIN_SRC emacs-lisp
   (use-package evil
     :straight (evil :type git :host github :repo "emacs-evil/evil")
