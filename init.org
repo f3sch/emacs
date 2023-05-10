@@ -2510,6 +2510,13 @@ Giving parenthesis some brains.
       (setq sp-pair-overlay-keymap (make-sparse-keymap))))
 #+END_SRC
 
+** Rainbow Delimiters
+#+BEGIN_SRC emacs-lisp
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode)
+    :commands rainbow-delimiters-mode)
+#+END_SRC
+
 ** Code
 *** ELisp
 **** Parinfer
