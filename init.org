@@ -6,8 +6,7 @@ This file is loaded before the package system and GUI is initialized.
 A detailed description is [[elisp:(info "(emacs) Early Init File")][here]].
 
 ** Small Startup Optimizations
-This avoids garbage collection during startup.
-Afterward, sensible defaults are re-enabled.
+This avoids garbage collection during startup. Afterward, sensible defaults are re-enabled.
 
 #+begin_src emacs-lisp :tangle early-init.el
   (defvar file-name-handler-alist-old file-name-handler-alist)
@@ -414,6 +413,14 @@ Mostly taken from doomemacs.
       `(dolist (targets (list ,@(nreverse where-alist)))
          (dolist (target (cdr targets))
            (advice-remove target #',symbol)))))
+#+END_SRC
+
+** Packages
+Commonly used packages.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package hydra)
+  (use-package async)
 #+END_SRC
 
 ** Backups
@@ -985,9 +992,11 @@ Clean up trailing whitespaces automatically.
 #+BEGIN_SRC emacs-lisp
   (use-package whitespace
     :straight (:type built-in)
+    ;; clean up by default
     :hook (before-save . whitespace-cleanup)
     :custom
-    (show-trailing-whitespace t))
+    ;; Turn off by default
+    (show-trailing-whitespace nil))
 #+END_SRC
 
 ** Auto Minor Mode
@@ -2181,6 +2190,7 @@ Possibly the most convincing reason to use EMACS? No, seriously it is awesome!
     (auto-revert-check-vc-info t)
     ;; Longer commit lines
     (git-commit-summary-max-length 90)
+    (git-commit-style-convention-checks '(overlong-summary-line non-empty-second-line))
     ;; Show more commits
     (magit-log-section-commit-count 25)
     ;; Do not autosave buffers
@@ -2200,58 +2210,7 @@ Possibly the most convincing reason to use EMACS? No, seriously it is awesome!
     ;; Show granular hunks
     (magit-diff-refine-hunk 'all)
     (magit-diff-refine-ignore-whitespace t)
-    (magit-diff-paint-whitespace-lines t)
-    :config
-    (defvar th/eldoc-git-show-stat--process nil)
-    (defun th/eldoc-git-show-stat (callback commit)
-      "Compute diffstat for COMMIT asynchronously, then call CALLBACK with it."
-      ;; Kill the possibly still running old process and its buffer.
-      (when (processp th/eldoc-git-show-stat--process)
-    (let ((buf (process-buffer th/eldoc-git-show-stat--process)))
-      (when (process-live-p th/eldoc-git-show-stat--process)
-        (let (confirm-kill-processes)
-          (kill-process th/eldoc-git-show-stat--process)))
-      (when (buffer-live-p buf)
-        (kill-buffer buf))))
-
-      ;; Spawn a new "git show" process.
-      (let* ((cmd (list "git" "--no-pager" "show"
-            "--no-color"
-            ;; Author Name <author@email.com>, <date-and-time>
-            "--format=format:%an <%ae>, %aD"
-            "--stat=80"
-            commit)))
-    ;; An async eldoc-documentation-function must also return a non-nil,
-    ;; non-string result if it's applicable for computing a documentation
-    ;; string, so we set and return the new process here.
-    (setq th/eldoc-git-show-stat--process
-          (make-process
-           :name "eldoc-git-show"
-           :buffer (generate-new-buffer " *git-show-stat*")
-           :noquery t
-           :command cmd
-           :sentinel (lambda (proc _event)
-               (when (eq (process-status proc) 'exit)
-                 (with-current-buffer (process-buffer proc)
-                   (goto-char (point-min))
-                   (put-text-property (point-min)
-                          (line-end-position)
-                          'face 'bold)
-                   (funcall callback (buffer-string)))))))))
-    (defvar th/magit-eldoc-last-commit nil)
-    (defun th/magit-eldoc-for-commit (callback)
-      (let ((commit (magit-commit-at-point)))
-    (when (and commit
-           (not (equal commit th/magit-eldoc-last-commit)))
-      (setq th/magit-eldoc-last-commit commit)
-      (th/eldoc-git-show-stat callback commit))))
-
-    (defun th/magit-eldoc-setup ()
-      (add-hook 'eldoc-documentation-functions
-        #'th/magit-eldoc-for-commit nil t))
-
-    (add-hook 'magit-status-mode-hook #'th/magit-eldoc-setup)
-    (add-hook 'magit-log-mode-hook #'th/magit-eldoc-setup))
+    (magit-diff-paint-whitespace-lines t))
 #+END_SRC
 
 *** TODO
@@ -2305,6 +2264,7 @@ them, and fork projects among other things.
     (evil-collection-forge-setup)
     :custom
     (forge-database-file (concat +data-dir "forge/forge-database.sqlite"))
+    (forge-owned-accounts '(("f3sch") . nil))
     :general
     (+local-leader-key
       :keymaps 'forge-topic-mode-map
@@ -2369,6 +2329,56 @@ Visual diff interface
 ** Git Config Modes
 #+BEGIN_SRC emacs-lisp
   (use-package git-modes)
+#+END_SRC
+
+** Smerge
+#+BEGIN_SRC emacs-lisp
+  (use-package smerge-mode
+    :straight (:type built-in)
+    :diminish smerge-mode
+    :init
+    (defhydra hydra-smerge-mode (:hint nil
+                                       :pre (if (not smerge-mode) (smerge-mode 1))
+                                       ;; Disable `smerge-mode' when quitting hydra if
+                                       ;; no merge conflicts remain.
+                                       :post (smerge-auto-leave))
+              "
+                                                           [smerge]
+    Movement   Keep           Diff              Other
+    ╭─────────────────────────────────────────────────────────╯
+       ^_g_^       [_b_] base       [_<_] upper/base    [_C_] Combine
+       ^_C-k_^     [_u_] upper      [_=_] upper/lower   [_r_] resolve
+       ^_k_ ↑^     [_l_] lower      [_>_] base/lower    [_R_] remove
+       ^_j_ ↓^     [_a_] all        [_H_] hightlight
+       ^_C-j_^     [_RET_] current  [_E_] ediff                 ╭──────────
+       ^_G_^                                                │ [_q_] quit
+  "
+              ("g" (progn (goto-char (point-min)) (smerge-next)))
+              ("G" (progn (goto-char (point-max)) (smerge-prev)))
+              ("C-j" smerge-next)
+              ("C-k" smerge-prev)
+              ("j" next-line)
+              ("k" previous-line)
+              ("b" smerge-keep-base)
+              ("u" smerge-keep-upper)
+              ("l" smerge-keep-lower)
+              ("a" smerge-keep-all)
+              ("RET" smerge-keep-current)
+              ("\C-m" smerge-keep-current)
+              ("<" smerge-diff-base-upper)
+              ("=" smerge-diff-upper-lower)
+              (">" smerge-diff-base-lower)
+              ("H" smerge-refine)
+              ("E" smerge-ediff)
+              ("C" smerge-combine-with-next)
+              ("r" smerge-resolve)
+              ("R" smerge-kill-current)
+              ("q" nil :color blue))
+    :hook (find-file . (lambda ()
+                         (save-excursion
+                           (goto-char (point-min))
+                           (when (re-search-forward "^<<<<<<< " nil t)
+                             (hydra-smerge-mode/body))))))
 #+END_SRC
 
 * Undo
