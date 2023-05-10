@@ -3015,7 +3015,9 @@ Cross-referencing.
   (use-package compile
     :defer t
     :straight (:type built-in)
-    :hook (compilation-filter . colorize-compilation-buffer)
+    :hook (
+           (compilation-filter . colorize-compilation-buffer)
+           (next-error . recenter))
     :init
     (require 'ansi-color)
     (defun colorize-compilation-buffer ()
@@ -3025,6 +3027,14 @@ Cross-referencing.
     (compilation-scroll-output 'first-error)
     (compilation-always-kill t)
     (compilation-ask-about-save nil)
+    (compilation-skip-threshold 0)
+    (compilation-read-command nil)
+    (compilation-message-face 'default)
+    (next-error-verbose nil)
+    (next-error-message-highlight nil)
+    :config
+    (evil-set-command-property 'next-error :jump t)
+    (evil-set-command-property 'previous-error :jump t)
     :general
     (+evil
       :keymaps 'compilation-mode-map
