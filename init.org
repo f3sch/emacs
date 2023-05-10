@@ -3624,6 +3624,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "Do" '(delete-other-windows :wk "Delete All Other Windows")
 
     ;; Quitting
+    "q" '(evil-window-delete :wk "Delete Window")
     "Q" '(save-buffers-kill-emacs :wk "Save all Buffers and Kill Emacs"))
 #+END_SRC
 
@@ -3656,8 +3657,15 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "/" '(consult-ripgrep :wk "Ripgrep")
     "." '(consult-line :wk "Search File")
     "SPC" '(consult-find :wk "Find File")
-    "s" '(screenshot :wk "Screnshot Buffer")
-    "S" '(self-screenshot :wk "Screnshot Emacs"))
+
+    "-" '(:ignore t :wk "Emacs Profiler")
+    "-s" '(profiler-start :wk "Profiler Start")
+    "-b" '(profiler-stop :wk "Profiler Stop")
+    "-r" '(profiler-report :wk "Profiler Report")
+
+    "`" '(:ignore t :wk "Screenshot")
+    "`s" '(screenshot :wk "Screnshot Buffer")
+    "`S" '(self-screenshot :wk "Screnshot Emacs"))
 #+END_SRC
 
 * EOF
