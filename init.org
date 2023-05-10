@@ -1352,6 +1352,28 @@ Zoom using =CTRL= +/-/0.
   (global-set-key (kbd "C-=") (lambda () (interactive) (text-scale-adjust 0)))
 #+END_SRC
 
+** Fringes
+#+BEGIN_SRC emacs-lisp
+  (define-fringe-bitmap '+dot-fringe-bitmap
+    (vector #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00011100
+            #b00111110
+            #b00111110
+            #b00111110
+            #b00011100
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000))
+#+END_SRC
+
 * Windows/Buffers
 ** Windows
 *** Winner
@@ -1887,13 +1909,6 @@ locations. The =default-directory= variable is not changed in the process.
        :map minibuffer-local-completion-map
        ("M-s f" . consult-dir-jump-file)
        ("M-g d" . consult-dir)))
-#+end_src
-
-*** consult-flycheck
-
-#+begin_src emacs-lisp
-  (use-package consult-flycheck
-    :bind ("M-g f" . consult-flycheck))
 #+end_src
 
 *** consult-git-log-grep
@@ -3099,46 +3114,88 @@ Correct misspelled words using vertico
     :general ([remap ispell-word] #'flyspell-correction-at-point))
 #+END_SRC
 
-*** Flycheck
+*** Flymake
 #+BEGIN_SRC emacs-lisp
-  (use-package flycheck
-    :defer t
+  (use-package flymake
+    :straight (:type built-in)
+    :commands (flymake-first-error+
+               flymake-last-error+)
+    :custom
+    (flymake-note-bitmap '(+dot-fringe-bitmap compilation-info))
+    (flymake-error-bitmap '(+dot-fringe-bitmap compilation-error))
+    (flymake-warning-bitmap '(+dot-fringe-bitmap compilation-warning))
+
     :init
-    (global-flycheck-mode)
+    (evil-declare-motion 'flymake-goto-next-error)
+    (evil-declare-motion 'flymake-goto-prev-error)
+    (evil-declare-motion 'flymake-first-error+)
+    (evil-declare-motion 'flymake-last-error+)
+
+    ;; Disable the legacy proc backend.
+    (setq-default flymake-diagnostic-functions nil)
+    (with-eval-after-load 'flymake-proc
+      (remove-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake))
+
+    (defmacro flymake-unsupported-command+ (name)
+      `(lambda ()
+         (interactive)
+         (message "Flymake doesn't have a parallel for: %s" (quote ,name))))
+
     :config
-    (setq flycheck-emacs-lisp-load-path 'inherit)
+    (evil-set-command-property 'flymake-goto-next-error :jump t)
+    (evil-set-command-property 'flymake-goto-prev-error :jump t)
 
-    ;; Rerunning checks on every newline is a mote excessive.
-    (delq 'new-line flycheck-check-syntax-automatically)
-    ;; And don’t recheck on idle as often
-    (setq flycheck-idle-change-delay 2.0)
+    (defun flymake-first-error+ ()
+      (interactive)
+      (let* ((ovs (flymake--overlays :compare #'< :key #'overlay-start))
+             (ov (car ovs)))
+        (cond
+         (ov (goto-char (overlay-start ov)))
+         (t (user-error "No flymake errors in the current buffer")))))
+    (evil-set-command-property 'flymake-first-error+ :jump t)
 
-    ;; For the above functionality, check syntax in a buffer that you
-    ;; switched to on briefly. This allows “refreshing” the syntax check
-    ;; state for several buffers quickly after e.g. changing a config
-    ;; file.
-    (setq flycheck-buffer-switch-check-intermediate-buffers t)
+    (defun flymake-last-error+ ()
+      (interactive)
+      (let* ((ovs (flymake--overlays :compare #'< :key #'overlay-start))
+             (ov (car (last ovs))))
+        (cond
+         (ov (goto-char (overlay-start ov)))
+         (t (user-error "No flymake errors in the current buffer")))))
+    (evil-set-command-property 'flymake-last-error+ :jump t)
 
-    ;; Display errors a little quicker (default is 0.9s)
-    (setq flycheck-display-errors-delay 0.2))
+    ;; Make the diagnostic buffer auto-move to the closest error.
+    (advice-add #'flymake-show-buffer-diagnostics :filter-return
+                (defun flymake-show-buffer-diagnostics-update-point+ (result)
+                  "Move point to the error closest to point in diagnostics buffer.
+  By default when you run `flymake-show-buffer-diagnostics' your point is
+  either the start of the buffer or where it was when you were previously
+  in that buffer.
+  This isn't ideal when you just want to inspect the error message for the
+  error at point. This advice moves the point to the closest error in the
+  diagnostics buffer to where you were in the original buffer."
+                  (with-current-buffer (flymake--diagnostics-buffer-name)
+                    (when-let* ((source flymake--diagnostics-buffer-source)
+                                (diag-deltas
+                                 (with-current-buffer source
+                                   (let ((point (point)))
+                                     (cl-loop for it in (cl-sort (flymake-diagnostics) #'<
+                                                                 :key #'flymake-diagnostic-beg)
+                                              collect (abs (- (flymake-diagnostic-beg it) point)))))))
+                      (goto-char (point-min))
+                      (let ((ix (seq-position diag-deltas (seq-min diag-deltas))))
+                        (forward-line ix))))
+                  result))
 
-  (use-package flycheck-popup-tip
-    :after (flycheck evil)
-    :hook (flycheck-mode . flycheck-popup-tip-mode)
-    :config
-    (setq flycheck-popup-tip-error-prefix "X ")
-    (with-eval-after-load 'evil
-      (add-hook 'evil-insert-state-entry-hook
-                #'flycheck-popup-tip-delete-popup)
-      (add-hook 'evil-replace-state-entry-hook
-                #'flycheck-popup-tip-delete-popup)))
+    :general
+    (:keymaps 'flymake-diagnostics-buffer-mode-map
+              :states 'motion
+              "RET" 'flymake-goto-diagnostic
+              "o" 'flymake-show-diagnostic))
+#+END_SRC
 
-  (use-package flycheck-posframe
-    :hook (flycheck-mode . flycheck-posframe-mode)
-    :config
-    (setq flycheck-posframe-warning-prefix "! "
-          flycheck-posframe-info-prefix    "··· "
-          flycheck-posframe-error-prefix   "X "))
+#+BEGIN_SRC emacs-lisp
+  (use-package flymake-diagnostic-at-point
+    :hook (flymake-mode . flymake-diagnostic-at-point-mode))
 #+END_SRC
 
 ** Keycast
