@@ -2538,6 +2538,16 @@ Giving parenthesis some brains.
   (use-package gdb-mi
     :straight (:type built-in)
     :custom
+    (gdb-mi-decode-strings 'utf-8)
+    (gdb-show-main t)
+    (gdb-debug-log-max 1024)
+    (gdb-restore-window-configuration-after-quit t)
+    (gdb-window-configuration-directory (expand-file-name "gdb" +data-dir))
+    (gdb-thread-buffer-verbose-names nil)
+    (gdb-display-io-nopopup t)
+    (gdb-show-changed-values t)
+    (gdb-delete-out-of-scope t)
+    (gdb-use-colon-colon-notation t)
     (gdb-many-windows t))
 #+END_SRC
 
