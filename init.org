@@ -3233,6 +3233,15 @@ a heatmap out of it.
 #+end_src
 
 * Security
+** EPG
+#+BEGIN_SRC emacs-lisp
+  (use-package epg
+    :straight (:type built-in)
+    :custom
+    (epg-pinentry-mode 'loopback)
+    (epg-user-id "BE70541948D9FB3FF0674B92997C87E6BE5239F0"))
+#+END_SRC
+
 ** EPA
 #+BEGIN_SRC emacs-lisp
   (use-package epa
@@ -3245,8 +3254,6 @@ a heatmap out of it.
     (epa-file-inhibit-auto-save t)
     (epa-keyserver "keys.openpgp.org")
     (epa-file-select-keys (if (null epa-file-encrypt-to) t nil))
-    (mml2015-use 'epg)
-    (epg-user-id "BE70541948D9FB3FF0674B92997C87E6BE5239F0")
     :commands (epa-search-keys)
     :init
     (add-to-list 'display-buffer-alist '("^\\*Keys\\*" . (display-buffer-below-selected))))
@@ -3268,6 +3275,7 @@ a heatmap out of it.
   (use-package mml-sec
     :straight (:type built-in)
     :custom
+    (mml2015-use 'epg)
     (mml-secure-smime-encrypt-to-self  t)
     (mml-secure-smime-sign-with-sender t)
     (mml-secure-openpgp-encrypt-to-self  t)
