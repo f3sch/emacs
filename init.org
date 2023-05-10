@@ -2567,6 +2567,18 @@ Giving parenthesis some brains.
 
 ** Code
 *** ELisp
+**** Pretty Print
+#+BEGIN_SRC emacs-lisp
+  (use-package pp
+    :general
+    (+local-leader-key
+      :keymaps 'emacs-lisp-mode-map
+      "eM" 'pp-macroexpand-expression
+      "em" 'pp-macroexpand-last-sexp
+      "ex" 'pp-eval-last-sexp
+      "eX" 'pp-eval-expression))
+#+END_SRC
+
 **** Parinfer
 #+BEGIN_SRC emacs-lisp
   (use-package parinfer-rust-mode
