@@ -2792,6 +2792,51 @@ I’ll activate the modeline notification.
 #+END_SRC
 
 * Tools
+** Urls
+#+BEGIN_SRC emacs-lisp
+  (use-package browse-url
+    :init
+    (advice-add #'browse-url-xdg-open :override #'+xopen-url)
+    (advice-add #'browse-url-can-use-xdg-open :override
+                (defun browse-url-prefer-xopen+ ()
+                  (and (or (getenv "DISPLAY")
+                           (getenv "WAYLAND_DISPLAY"))
+                       (executable-find "xopen"))))
+
+    :config
+    (defun +xopen-file (file &optional arg)
+      (interactive "fP")
+      (+xopen-url file))
+
+    (defun +xopen-url (url &optional arg)
+      "Open visited file in default external program.
+  When in dired mode, open file under the cursor.
+  With a prefix ARG always prompt for command to use."
+      (interactive (list (or (when (derived-mode-p 'dired-mode)
+                               (dired-get-file-for-visit))
+                             (smart-buffer-file-name)
+                             (user-error "Cannot determine file name for buffer."))
+                         current-prefix-arg))
+
+      (when (string-prefix-p "~" url)
+        (setq url (expand-file-name url)))
+
+      (let ((program (if arg
+                         (read-shell-command "Open current file with: ")
+                       "xopen")))
+        (call-process program nil 0 nil url)))
+
+    (defun +xopen-pdf (path page)
+      (if (and (not (string-empty-p page))
+               (executable-find "zathura"))
+          (call-process "zathura" nil 0 nil path "--page" page)
+        (+xopen-url path)))
+
+    :general
+    (:keymaps 'embark-file-map
+              [remap embark-open-externally] '+xopen-file))
+#+END_SRC
+
 ** Dired
 #+BEGIN_SRC emacs-lisp
   (use-package dirvish
