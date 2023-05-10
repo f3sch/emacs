@@ -661,6 +661,11 @@ For better clipboard integration in Linux.
   (setq select-enable-clipboard t
     select-enable-primary t
     save-interprogram-paste-before-kill t)
+
+  (setq x-select-request-type     '(UTF8_STRING COMPOUND_TEXT TEXT STRING)
+        x-select-enable-clipboard t
+        x-select-enable-primary   t
+        x-stretch-cursor          t)
 #+END_SRC
 
 ** CJK Encoding
