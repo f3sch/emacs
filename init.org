@@ -3573,6 +3573,12 @@ take a screenshot of a specific area of a buffer and make it look nice.
                           :repo "tecosaur/screenshot"))
 #+END_SRC
 
+** Emojify
+#+BEGIN_SRC emacs-lisp
+  (use-package emojify
+    :hook (after-init . global-emojify-mode))
+#+END_SRC
+
 * Keybindings
 ** Functions
 #+BEGIN_SRC emacs-lisp
