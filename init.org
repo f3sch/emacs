@@ -1671,11 +1671,26 @@ Help me.
 
 * Completions
 ** Basics
+*** Prescient
+A package for remembering and sorting completion candidates based on frequency
+of usage. This is intended to be used with orderless, however because prescient
+has its own functions for filtering if orderless is disabled prescient will take
+over that as well.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package prescient
+    :custom
+    (prescient-history-length 1000)
+    (prescient-save-file (expand-file-name "prescient-history.el" +state-dir))
+    :config
+    (prescient-persist-mode +1))
+#+END_SRC
+
 *** Orderless Style
 #+BEGIN_SRC emacs-lisp
 (use-package orderless
   :custom
-  (completion-styles '(orderless basic))
+  (completion-styles '(orderless prescient basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles . (partial-completion)))
                    (eglot (styles . (orderless))))))
@@ -1755,6 +1770,11 @@ For minibuffer completions.
     (vertico-count 10)
     (vertico-count-format '("%-5s " . "%2$s"))
     (vertico-resize t))
+#+END_SRC
+
+*** Prescient Integration
+#+BEGIN_SRC emacs-lisp
+  (use-package vertico-prescient)
 #+END_SRC
 
 ** consult
@@ -1938,6 +1958,8 @@ locations. The =default-directory= variable is not changed in the process.
 #+begin_src emacs-lisp
   (use-package consult-eglot
     :after (eglot consult)
+    :config
+    (evil-set-command-property 'consult-eglot :jump t)
     :general
     ([remap xref-find-apropos] #'consult-eglot-symbols))
 #+end_src
@@ -2063,6 +2085,11 @@ provides an alternative overlay-based display.
     ;; https://github.com/minad/corfu#completing-with-corfu-in-the-minibuffer
     (add-hook 'minibuffer-setup-hook #'corfu-enable-always-in-minibuffer 1))
 #+end_src
+
+*** Prescient Integration
+#+BEGIN_SRC emacs-lisp
+  (use-package corfu-prescient)
+#+END_SRC
 
 *** corfu-popupinfo
 
