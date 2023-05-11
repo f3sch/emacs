@@ -2618,6 +2618,28 @@ Giving parenthesis some brains.
 #+END_SRC
 
 ** Code
+*** Assembly
+#+BEGIN_SRC emacs-lisp
+  (use-package asm-mode
+    :straight (:type built-in)
+    :hook (asm-mode . indent-tabs-mode)
+    :mode (rx "." (or "asl" "S" "s") eol))
+#+END_SRC
+
+*** AWK
+#+BEGIN_SRC emacs-lisp
+  (use-package awk
+    :straight (:type built-in)
+    :interpreter "gawk"
+    :hook (awk-mode . +flylint)
+
+    :preface
+    (defun awk-mode-reset-electric-pair+ ()
+      (setq-local electric-pair-inhibit-predicate
+                  #'electric-pair-default-inhibit))
+    :hook (awk-mode . awk-mode-reset-electric-pair+))
+#+END_SRC
+
 *** ELisp
 **** Pretty Print
 #+BEGIN_SRC emacs-lisp
@@ -2651,6 +2673,84 @@ Giving parenthesis some brains.
 #+END_SRC
 
 *** C/C++
+#+BEGIN_SRC emacs-lisp
+  (use-package cc-mode
+    :straight (:type built-in)
+    :custom
+    (c-default-style '((java-mode . "linux")
+                       (awk-mode . "awk")
+                       (other . "linux"))))
+#+END_SRC
+
+#+Begin_SRC emacs-lisp
+    (use-package c-ts-mode
+      :straight (:type built-in)
+      :custom
+      (c-ts-mode-indent-style 'linux))
+#+END_SRC
+
+
+**** CMake
+#+BEGIN_SRC emacs-lisp
+  (use-package cmake-mode
+    :mode (rx (or (and "CMakeLists.txt" eol) ".cmake")))
+
+  (use-package cmake-ts-mode
+    :mode (rx (or (and "CMakeLists.txt" eol) ".cmake")))
+#+END_SRC
+
+*** Markdown
+#+BEGIN_SRC emacs-lisp
+  ;; The markdown mode is awesome! unbeatable
+  (use-package markdown-mode
+    :init
+    (advice-add #'markdown--command-map-prompt :override #'ignore)
+    (advice-add #'markdown--style-map-prompt   :override #'ignore)
+    :mode ("README\\(?:\\.md\\)?\\'" . gfm-mode)
+    :hook (markdown-mode . visual-line-mode)
+    :bind (:map markdown-mode-style-map
+                ("r" . markdown-insert-ruby-tag)
+                ("d" . markdown-insert-details))
+    :config
+    (defun markdown-insert-ruby-tag (text ruby)
+      "Insert ruby tag with `TEXT' and `RUBY' quickly."
+      (interactive "sText: \nsRuby: \n")
+      (insert (format "<ruby>%s<rp>(</rp><rt>%s</rt><rp>)</rp></ruby>" text ruby)))
+
+    (defun markdown-insert-details (title)
+      "Insert details tag (collapsible) quickly."
+      (interactive "sTitle: ")
+      (insert (format "<details><summary>%s</summary>\n\n</details>" title)))
+    :custom
+    (markdown-header-scaling t)
+    (markdown-enable-wiki-links t)
+    (markdown-italic-underscore t)
+    (markdown-asymmetric-header t)
+    (markdown-gfm-uppercase-checkbox t)
+    (markdown-fontify-code-blocks-natively t))
+
+  ;; Pixel alignment for org/markdown tables
+  (use-package valign
+    :hook ((markdown-mode org-mode) . valign-mode))
+#+END_SRC
+
+*** XML
+#+BEGIN_SRC emacs-lisp
+  (use-package nxml-mode
+    :straight (:type built-in)
+    :mode (("\\.xml\\'" . nxml-mode)
+           ("\\.rss\\'" . nxml-mode))
+    :custom
+    (nxml-slash-auto-complete-flag t)
+    (nxml-auto-insert-xml-declaration-flag t))
+#+END_SRC
+
+*** YAML
+#+BEGIN_SRC emacs-lisp
+  (use-package yaml-mode
+    :mode ("\\.ya?ml\\'" . yaml-mode))
+#+END_SRC
+
 ** Debug
 *** GDB
 #+BEGIN_SRC emacs-lisp
@@ -3099,56 +3199,15 @@ One thing =pdf-tools= doesn’t handle is restoring the PDF to the last point it
                                                       user-emacs-directory)))
 #+END_SRC
 
-** Markdown
+** Logview
 #+BEGIN_SRC emacs-lisp
-  ;; The markdown mode is awesome! unbeatable
-  (use-package markdown-mode
-    :init
-    (advice-add #'markdown--command-map-prompt :override #'ignore)
-    (advice-add #'markdown--style-map-prompt   :override #'ignore)
-    :mode ("README\\(?:\\.md\\)?\\'" . gfm-mode)
-    :hook (markdown-mode . visual-line-mode)
-    :bind (:map markdown-mode-style-map
-                ("r" . markdown-insert-ruby-tag)
-                ("d" . markdown-insert-details))
-    :config
-    (defun markdown-insert-ruby-tag (text ruby)
-      "Insert ruby tag with `TEXT' and `RUBY' quickly."
-      (interactive "sText: \nsRuby: \n")
-      (insert (format "<ruby>%s<rp>(</rp><rt>%s</rt><rp>)</rp></ruby>" text ruby)))
-
-    (defun markdown-insert-details (title)
-      "Insert details tag (collapsible) quickly."
-      (interactive "sTitle: ")
-      (insert (format "<details><summary>%s</summary>\n\n</details>" title)))
+  (use-package logview
+    :hook (
+           (logview-mode . read-only-mode)
+           (logview-mode . auto-revert-tail-mode))
     :custom
-    (markdown-header-scaling t)
-    (markdown-enable-wiki-links t)
-    (markdown-italic-underscore t)
-    (markdown-asymmetric-header t)
-    (markdown-gfm-uppercase-checkbox t)
-    (markdown-fontify-code-blocks-natively t))
-
-  ;; Pixel alignment for org/markdown tables
-  (use-package valign
-    :hook ((markdown-mode org-mode) . valign-mode))
-#+END_SRC
-
-** XML
-#+BEGIN_SRC emacs-lisp
-  (use-package nxml-mode
-    :straight (:type built-in)
-    :mode (("\\.xml\\'" . nxml-mode)
-           ("\\.rss\\'" . nxml-mode))
-    :custom
-    (nxml-slash-auto-complete-flag t)
-    (nxml-auto-insert-xml-declaration-flag t))
-#+END_SRC
-
-** YAML
-#+BEGIN_SRC emacs-lisp
-  (use-package yaml-mode
-    :mode ("\\.ya?ml\\'" . yaml-mode))
+    (logview-views-file (expand-file-name "logview.views" +data-dir))
+    (logview-cache-filename (expand-file-name "logview-cache.extmap" +cache-dir)))
 #+END_SRC
 
 ** Ripgrep
