@@ -3349,8 +3349,6 @@ Correct misspelled words using vertico
 #+BEGIN_SRC emacs-lisp
   (use-package flymake
     :straight (:type built-in)
-    :commands (flymake-first-error+
-               flymake-last-error+)
     :custom
     (flymake-note-bitmap '(+dot-fringe-bitmap compilation-info))
     (flymake-error-bitmap '(+dot-fringe-bitmap compilation-error))
@@ -3417,6 +3415,7 @@ Correct misspelled words using vertico
                         (forward-line ix))))
                   result))
 
+    (flymake-mode)
     :general
     (:keymaps 'flymake-diagnostics-buffer-mode-map
               :states 'motion
