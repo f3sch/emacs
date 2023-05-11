@@ -111,6 +111,10 @@ A few useful variables to have.
   Use this for: packages, server binaries, package source, pulled module
   libraries, generated files for profiles, profiles themselves,
   autoloads/loaddefs, etc.")
+
+  (defvar +state-dir
+          (expand-file-name "emacs/" (or (getenv-internal "XDG_STATE_HOME") "~/.local/state"))
+  "State files contain long-lived local configuration data.")
 #+END_SRC
 
 ** Bootstrap straight.el
@@ -2168,6 +2172,27 @@ advantage of Company backends even if you are not using Company as frontend.
   (add-to-list 'completion-at-point-functions #'cape-abbrev))
 #+end_src
 
+* Projects
+** Desktop
+#+BEGIN_SRC emacs-lisp
+  (use-package desktop
+    :straight (:type built-in)
+    :custom
+    (desktop-path (list (expand-file-name "projects.el" +state-dir)))
+    :config
+    (desktop-save-mode))
+#+END_SRC
+
+** Project
+The built in project management library.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package project
+    :straight (:type built-in)
+    :custom
+    (project-list-file (expand-file-name "projects.el" +state-dir)))
+#+END_SRC
+
 * VC
 ** Basics
 Follow symlinks
@@ -2207,16 +2232,27 @@ Possibly the most convincing reason to use EMACS? No, seriously it is awesome!
     (magit-bury-buffer-function #'magit-restore-window-configuration)
     ;; Set default clone directory
     (magit-clone-default-directory "~/git/")
-    ;; Show more transient levels
-    (transient-default-level 7)
-    (transient-levels-file (concat +data-dir "transient/levels"))
-    (transient-values-file (concat +data-dir "transient/values"))
-    (transient-history-file (concat +data-dir "transient/history"))
     ;; Diffing
     ;; Show granular hunks
     (magit-diff-refine-hunk 'all)
     (magit-diff-refine-ignore-whitespace t)
     (magit-diff-paint-whitespace-lines t))
+#+END_SRC
+
+*** Transient
+#+BEGIN_SRC emacs-lisp
+  (use-package transient
+    :straight (:type built-in)
+    :custom
+    ;; Show more transient levels
+    (transient-default-level 7)
+    ;; Where to save files
+    (transient-levels-file (concat +state-dir "transient/levels"))
+    (transient-values-file (concat +state-dir "transient/values"))
+    (transient-history-file (concat +data-dir "transient/history"))
+    :general
+    (:keymaps 'transient-base-map
+              "<escape>" 'transient-quit-one))
 #+END_SRC
 
 *** TODO
@@ -2269,7 +2305,7 @@ them, and fork projects among other things.
     (setq forge-add-default-bindings nil)
     (evil-collection-forge-setup)
     :custom
-    (forge-database-file (concat +data-dir "forge/forge-database.sqlite"))
+    (forge-database-file (concat +state-dir "forge/forge-database.sqlite"))
     (forge-owned-accounts '(("f3sch") . nil))
     :general
     (+local-leader-key
