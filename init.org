@@ -2174,7 +2174,7 @@ advantage of Company backends even if you are not using Company as frontend.
   (use-package desktop
     :straight (:type built-in)
     :custom
-    (desktop-path (list (expand-file-name "projects.el" +state-dir)))
+    (desktop-path (list +state-dir))
     :config
     (desktop-save-mode))
 #+END_SRC
