@@ -5,6 +5,11 @@
 This file is loaded before the package system and GUI is initialized.
 A detailed description is [[elisp:(info "(emacs) Early Init File")][here]].
 
+** SOF
+#+BEGIN_SRC emacs-lisp :tangle early-init.el
+  ;; early-init.el -*- lexical-binding: t; -*-
+#+END_SRC
+
 ** Small Startup Optimizations
 This avoids garbage collection during startup. Afterward, sensible defaults are re-enabled.
 
@@ -85,7 +90,23 @@ Required by straight.el.
   (setq package-enable-at-startup nil)
 #+end_src
 
+** EOF
+#+begin_src emacs-lisp :tangle early-init.el
+  ;; Local Variables:
+  ;; coding: utf-8
+  ;; no-byte-compile: t
+  ;; no-native-compile: t
+  ;; no-update-autoloads: t
+  ;; End:
+  ;;; early-init.el ends here
+#+end_src
+
 * Startup
+** SOF
+#+BEGIN_SRC emacs-lisp
+  ;;; init.el --- Load the full configuration -*- lexical-binding: t -*-
+#+END_SRC
+
 ** Variables
 A few useful variables to have.
 
@@ -2671,7 +2692,6 @@ Giving parenthesis some brains.
       (c-ts-mode-indent-style 'linux))
 #+END_SRC
 
-
 **** CMake
 #+BEGIN_SRC emacs-lisp
   (use-package cmake-mode
@@ -3800,3 +3820,12 @@ Installs a file local hook, to tangle this file.
 # after-save-hook: +tangle-config
 # eval: (display-line-numbers-mode)
 # End:
+
+** EOF
+#+BEGIN_SRC emacs-lisp
+  ;; Local Variables:
+  ;; no-byte-compile: t
+  ;; no-native-compile: t
+  ;; no-update-autoloads: t
+  ;; End:
+#+END_SRC
