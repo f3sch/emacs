@@ -1388,6 +1388,20 @@ Zoom using =CTRL= +/-/0.
             #b00000000))
 #+END_SRC
 
+** Line Wrapping
+This package provides a mode such that when a paragraph you’re inserting gets
+too long, when it wraps round to the next line (assuming truncate-lines is
+disabled) sequential lines are indented slightly to distinguish them from other
+lines.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package adaptive-wrap
+    :custom
+    (adaptive-wrap-extra-indent 2)
+    :init
+    (adaptive-wrap-prefix-mode))
+#+END_SRC
+
 * Windows/Buffers
 ** Windows
 *** Winner
