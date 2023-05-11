@@ -1538,6 +1538,7 @@ Now, I cannot go back.
     :init
     (evil-mode)
     :custom
+    (evil-want-fine-undo t)
     (evil-want-integration t)
     (evil-want-C-g-bindings t)
     (evil-want-C-i-jump nil)
