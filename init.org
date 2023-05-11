@@ -3392,7 +3392,7 @@ Cross-referencing.
 Correct misspelled words using vertico
 #+BEGIN_SRC emacs-lisp
   (use-package flyspell-correct
-    :commands flyspell-correct-previous
+    :after flyspell
     :general ([remap ispell-word] #'flyspell-correction-at-point))
 #+END_SRC
 
@@ -3412,36 +3412,11 @@ Correct misspelled words using vertico
     (evil-declare-motion 'flymake-last-error+)
 
     ;; Disable the legacy proc backend.
-    (setq-default flymake-diagnostic-functions nil)
-    (with-eval-after-load 'flymake-proc
-      (remove-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake))
-
-    (defmacro flymake-unsupported-command+ (name)
-      `(lambda ()
-         (interactive)
-         (message "Flymake doesn't have a parallel for: %s" (quote ,name))))
+    (remove-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake)
 
     :config
     (evil-set-command-property 'flymake-goto-next-error :jump t)
     (evil-set-command-property 'flymake-goto-prev-error :jump t)
-
-    (defun flymake-first-error+ ()
-      (interactive)
-      (let* ((ovs (flymake--overlays :compare #'< :key #'overlay-start))
-             (ov (car ovs)))
-        (cond
-         (ov (goto-char (overlay-start ov)))
-         (t (user-error "No flymake errors in the current buffer")))))
-    (evil-set-command-property 'flymake-first-error+ :jump t)
-
-    (defun flymake-last-error+ ()
-      (interactive)
-      (let* ((ovs (flymake--overlays :compare #'< :key #'overlay-start))
-             (ov (car (last ovs))))
-        (cond
-         (ov (goto-char (overlay-start ov)))
-         (t (user-error "No flymake errors in the current buffer")))))
-    (evil-set-command-property 'flymake-last-error+ :jump t)
 
     ;; Make the diagnostic buffer auto-move to the closest error.
     (advice-add #'flymake-show-buffer-diagnostics :filter-return
@@ -3476,7 +3451,13 @@ Correct misspelled words using vertico
 
 #+BEGIN_SRC emacs-lisp
   (use-package flymake-diagnostic-at-point
-    :hook (flymake-mode . flymake-diagnostic-at-point-mode))
+    :after flymake
+    :custom
+    (flymake-diagnostic-at-point-display-diagnostic-function 'flymake-diagnostic-at-point-display-popup)
+    :hook (flymake-mode-hook . flymake-diagnostic-at-point-mode))
+
+  (use-package flymake-collection
+  :hook (after-init . flymake-collection-hook-setup))
 #+END_SRC
 
 ** Keycast
