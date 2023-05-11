@@ -3625,8 +3625,11 @@ take a screenshot of a specific area of a buffer and make it look nice.
   (+leader-key
     :infix "g"
     "" '(:ignore t :wk "Git")
+    "D" '(vc-diff :wk "Show Diff")
+    "d" '(vc-ediff :wk "Show Diff")
     "s" '(git-gutter:stage-hunk :wk "Stage Hunk")
     "r" '(git-gutter:revert-hunk :wk "Revert Hunk")
+    "R" '(vc-revert :wk "Revert File")
     "n" '(git-gutter:next-hunk :wk "Next Hunk")
     "p" '(git-gutter:previous-hunk :wk "Previous Hunk")
     "g" '(magit-status :wk "Status"))
@@ -3744,7 +3747,10 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "r" '(persp-rename :wk "Rename Perspective")
     "d" '(persp-kill :wk "Delete")
     "]" '(persp-next :wk "Next")
-    "[" '(persp-prev :wk "Previous"))
+    "[" '(persp-prev :wk "Previous")
+    "D" '(:ignore t :wk "Desktop")
+    "Ds" '(desktop-save :wk "Save Current Session")
+    "Dr" '(desktop-read "Load Last Session"))
 #+END_SRC
 
 *** Special
