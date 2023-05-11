@@ -2530,22 +2530,29 @@ The future.
     (treesit-font-lock-level 4))
 
   (use-package treesit-auto
-    :straight (:host github :repo "renzmann/treesit-auto")
+    :straight (:host github :repo "renzmann/treesit-auto"
+                     :post-build ((require 'treesit-auto)
+                                  (let ((treesit-auto-install t)
+                                        (treesit-language-source-alist
+                                         (treesit-auto--build-treesit-source-alist)))
+                                    (treesit-auto-install-all))))
     :hook (after-init . global-treesit-auto-mode)
     :custom
-    (treesit-auto-install 'prompt))
+    (treesit-auto-install t))
 #+END_SRC
 
 ** Formatting
 #+BEGIN_SRC emacs-lisp
   (use-package apheleia
     :straight (apheleia :type git :host github :repo "radian-software/apheleia")
-    :hook prog-mode
-    :init
-    (apheleia-global-mode +1)
+    :custom
+    (apheleia-hide-log-buffers t)
+    (apheleia-remote-alogrithm 'remote)
     :config
     ;; Also enable lisp indentation in emacs-lisp
-    (push '(emacs-lisp-mode . lisp-indent) apheleia-mode-alist))
+    (push '(emacs-lisp-mode . lisp-indent) apheleia-mode-alist)
+    ;; Enable the global mode
+    (apheleia-global-mode))
 #+END_SRC
 
 ** Smartparens
