@@ -2176,7 +2176,8 @@ advantage of Company backends even if you are not using Company as frontend.
     :custom
     (desktop-path (list +state-dir))
     :config
-    (desktop-save-mode))
+    ;;(desktop-save-mode)
+    )
 #+END_SRC
 
 ** Project
