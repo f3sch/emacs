@@ -743,7 +743,8 @@ But do not resize windows pixelwise, this can cause crashes in some cases when
 resizing too many windows at once or rapidly.
 
 #+BEGIN_SRC emacs-lisp
-  (setq window-resize-pixelwise nil)
+  (setq window-resize-pixelwise nil
+        window-combination-resize t)
 #+END_SRC
 
 GUIs are inconsistent across systems, desktop environments, and themes, and
@@ -1421,6 +1422,11 @@ Zoom using =CTRL= +/-/0.
     (interactive)
     (let ((evil-vsplit-window-right (not evil-vsplit-window-right)))
       (call-interactively #'evil-window-vsplit)))
+#+END_SRC
+
+*** Rotate
+#+BEGIN_SRC emacs-lisp
+  (use-package rotate)
 #+END_SRC
 
 ** Buffers
@@ -3632,6 +3638,10 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "Dk" '(windmove-delete-up :wk "Delete Up")
     "Dl" '(windmove-delete-left :wk "Delete Left")
     "Do" '(delete-other-windows :wk "Delete All Other Windows")
+
+    ;; Rotating
+    "c" '(rotate-window :wk "Cycle Window")
+    "C" '(rotate-layout :wk "Cycle Layout")
 
     ;; Quitting
     "q" '(evil-window-delete :wk "Delete Window")
