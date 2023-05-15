@@ -2322,6 +2322,8 @@ Possibly the most convincing reason to use EMACS? No, seriously it is awesome!
     (transient-levels-file (concat +state-dir "transient/levels"))
     (transient-values-file (concat +state-dir "transient/values"))
     (transient-history-file (concat +data-dir "transient/history"))
+    :config
+    (transient-bind-q-to-quit)
     :general
     (:keymaps 'transient-base-map
               "<escape>" 'transient-quit-one))
