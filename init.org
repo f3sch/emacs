@@ -3301,7 +3301,6 @@ recolor feature which kind of enables a dark mode for PDFs.
 
 #+BEGIN_SRC emacs-lisp
   (use-package pdf-tools
-    :defer t
     :magic ("%PDF" . pdf-view-mode)
     :hook (pdf-tools-enabled . pdf-view-midnight-minor-mode)
     :general
@@ -3420,15 +3419,16 @@ Cross-referencing.
     (next-error-verbose nil)
     (next-error-message-highlight nil)
     :config
+    (defun +prettify-compilation (&rest _)
+      "Prettify compilation buffer."
+      (with-current-buffer "*compilation*"
+        (toggle-truncate-lines -1)
+        (highlight-regexp "FAIL.*" 'diff-error)))
+    (advice-add 'compile :after #'+prettify-compilation)
+    ;; Evil
     (evil-set-command-property 'next-error :jump t)
     (evil-set-command-property 'previous-error :jump t)
-    :general
-    (+evil
-      :keymaps 'compilation-mode-map
-      "g" nil
-      "r" nil
-      "R" #'recompile
-      "h" nil))
+    (evil-set-initial-state 'compilation-mode 'normal))
 #+END_SRC
 
 ** Info
