@@ -2589,7 +2589,8 @@ Hence Something visually appealing.
 #+BEGIN_SRC emacs-lisp
   (use-package eglot
     :straight (:type built-in)
-    :hook (prog-mode . eglot-ensure)
+    :hook ((prog-mode . eglot-ensure)
+           (eglot-managed-mode . eglot-inlay-hints-mode))
     :custom
     (eglot-autoshutdown t)
     (eglot-autoreconnect 3)
@@ -2605,15 +2606,18 @@ Hence Something visually appealing.
                  '((c-ts-mode c++-ts-mode c-mode c++-mode)
                    . ("clangd"
                       "-j=2"
-                      "--offset-encoding=utf-8"
+                      ;; "--offset-encoding=utf-8"
                       "--header-insertion=never"
                       "--header-insertion-decorators=0"
                       "--completion-style=detailed"
                       "--completion-parse=auto"
+                      "--all-scopes-completion"
+                      "--cross-file-rename"
                       "--log=error"
                       "--malloc-trim"
                       "--background-index"
-                      "--pch-storage=disk"
+                      "--background-index-priority=low"
+                      "--pch-storage=memory"
                       "--clang-tidy"))))
 #+END_SRC
 
