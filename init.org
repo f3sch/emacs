@@ -2294,7 +2294,8 @@ The built in project management library.
   (use-package project
     :straight (:type built-in)
     :custom
-    (project-list-file (expand-file-name "projects.el" +state-dir)))
+    (project-list-file (expand-file-name "projects.el" +state-dir))
+    (project-vc-extra-root-markers '(".projectile.el" ".project.el" ".project")))
 #+END_SRC
 
 * VC
