@@ -3245,6 +3245,15 @@ I’ll activate the modeline notification.
       "C-r" #'dired-rsync))
 #+END_SRC
 
+** Disk Usage
+Disk Usage is a file system analyzer: it offers a tabulated view of file
+listings sorted by size. Directory sizes are computed recursively. The results
+are cached for speed.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package disk-usage)
+#+END_SRC
+
 ** PDF
 =pdf-tools= enables PDF support for Emacs, much better than its built-in support
 with DocView. Aside from the classical settings such as keybinds, I also enable
@@ -3809,6 +3818,14 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "f" '(+open-config :wk "Edit Config")
     "-" '(dirvish :wk "Dired")
     "s" '(dirvish-side :wk "Sidebar"))
+#+END_SRC
+
+*** Toggle
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "t"
+    "" '(:ignore t :wk "Toggle")
+    "d" '(disk-usage-here :wk "Show Disk Usage Here"))
 #+END_SRC
 
 *** Window
