@@ -3577,6 +3577,14 @@ a heatmap out of it.
                                     text-scale-pinch)))
 #+end_src
 
+** Info Colours
+#+BEGIN_SRC emacs-lisp
+  (use-package info-colors
+    :commands (info-colors-fontify-node)
+    :config
+    (add-hook 'Info-selection-hook 'info-colors-fontify-node))
+#+END_SRC
+
 * Security
 ** EPG
 #+BEGIN_SRC emacs-lisp
