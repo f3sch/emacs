@@ -2553,6 +2553,32 @@ Hence Something visually appealing.
 #+END_SRC
 
 * Org
+** Base
+#+BEGIN_SRC emacs-lisp
+  (use-package org
+    :straight (:type built-in)
+    :config
+    (setq
+     ;; Edit settings
+     org-auto-align-tags nil
+     org-tags-column 0
+     org-catch-invisible-edits 'show-and-error
+     org-special-ctrl-a/e t
+     org-insert-heading-respect-content t
+
+     ;; Org styling, hide markup etc.
+     org-hide-emphasis-markers t
+     org-pretty-entities t
+     org-ellipsis "…"))
+#+END_SRC
+
+** Modern Look
+#+BEGIN_SRC emacs-lisp
+  (use-package org-modern
+    :config
+    (global-org-modern-mode))
+#+END_SRC
+
 ** Shortcuts
 *** Fast SRC_BLOCK
 #+BEGIN_SRC emacs-lisp
