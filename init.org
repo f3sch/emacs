@@ -2676,7 +2676,10 @@ The future.
     (apheleia-remote-alogrithm 'remote)
     :config
     ;; Also enable lisp indentation in emacs-lisp
-    (push '(emacs-lisp-mode . lisp-indent) apheleia-mode-alist)
+    (dolist (alist '((lisp-data-mode . lisp-indent)
+                     (emacs-lisp-mode . lisp-indent)
+                     (sh-mode . shfmt)))
+      (push 'apheleia-mode-alist alist))
     ;; Enable the global mode
     (apheleia-global-mode))
 #+END_SRC
@@ -3878,6 +3881,8 @@ take a screenshot of a specific area of a buffer and make it look nice.
   (+leader-key
     "/" '(consult-ripgrep :wk "Ripgrep")
     "." '(consult-line :wk "Search File")
+    "X" '(persp-switch-to-scratch-buffer :wk "Scratch Buffer")
+    "x" '(org-capture :wk "Capture")
     "SPC" '(consult-find :wk "Find File")
 
     "-" '(:ignore t :wk "Emacs Profiler")
