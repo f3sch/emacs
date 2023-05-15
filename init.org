@@ -2816,6 +2816,18 @@ Giving parenthesis some brains.
       "M" #'parinfer-rust-toggle-disable))
 #+END_SRC
 
+**** Checkdoc
+Feature `checkdoc' provides some tools for validating Elisp docstrings against
+common conventions.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package checkdoc
+    :straight (:type built-in)
+    :init
+    ;; Not sure why this isn't included by default.
+    (put 'checkdoc-package-keywords-flag 'safe-local-variable #'booleanp))
+#+END_SRC
+
 *** C/C++
 #+BEGIN_SRC emacs-lisp
   (use-package cc-mode
