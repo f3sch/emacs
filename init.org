@@ -680,6 +680,13 @@ three dots. Let’s make it so:
     (setq truncate-string-ellipsis "…"))
 #+END_SRC
 
+This also applies to sexp expressions.
+#+BEGIN_SRC emacs-lisp
+  ;; remove ellipsis when printing sexps in message buffer
+  (setq eval-expression-print-length nil
+        eval-expression-print-level  nil)
+#+END_SRC
+
 ** Formatting
 #+BEGIN_SRC emacs-lisp
   ;; Favor spaces over tabs. Pls dun h8, but I think spaces (and 4 of them) is a
@@ -1778,6 +1785,7 @@ over that as well.
     :custom
     (prescient-history-length 1000)
     (prescient-save-file (expand-file-name "prescient-history.el" +state-dir))
+    (prescient-sort-full-matches-first t)
     :config
     (prescient-persist-mode +1))
 #+END_SRC
@@ -1852,6 +1860,8 @@ For minibuffer completions.
     (after-init . vertico-mode)
     :init
     (vertico-mode)
+    (vertico-mouse-mode)
+    (vertico-multiform-mode)
     :straight (vertico :files (:defaults "extensions/*")
                :includes (vertico-multiform))
     :bind
@@ -1862,6 +1872,9 @@ For minibuffer completions.
       :map minibuffer-local-map
       ("M-h" . backward-kill-word))
     :custom
+    (vertico-multiform-categories
+        '((buffer (vertico-sort-function . copy-sequence))))
+    (vertico-preselect 'first)
     (vertico-cycle t)
     (vertico-count 10)
     (vertico-count-format '("%-5s " . "%2$s"))
@@ -2036,6 +2049,7 @@ locations. The =default-directory= variable is not changed in the process.
 
 #+begin_src emacs-lisp
   (use-package consult-dir
+    :after consult
     :bind (("M-g d"   . consult-dir)
        :map minibuffer-local-completion-map
        ("M-s f" . consult-dir-jump-file)
@@ -2043,9 +2057,9 @@ locations. The =default-directory= variable is not changed in the process.
 #+end_src
 
 *** consult-git-log-grep
-
 #+begin_src emacs-lisp
   (use-package consult-git-log-grep
+    :after consult
     :custom
     (consult-git-log-grep-open-function #'magit-show-commit))
 #+end_src
@@ -2059,6 +2073,23 @@ locations. The =default-directory= variable is not changed in the process.
     :general
     ([remap xref-find-apropos] #'consult-eglot-symbols))
 #+end_src
+
+*** consult-project-extra
+=consult-project-extra= defines an endpoint for accessing different sources
+related to the common project workflow. Using Consult’s narrowing system, the
+user is able to access the current project’s buffers, project files and all the
+known projects, in case they want to change projects quickly.
+=consult-project-extra= provides an extension to the default Consult
+functionality, using the built-in package =project.el=, defining the functions
+=consult-project-extra-find= and =consult-project-extra-find-other-window=.
+Furthermore, =consult-project-extra= only depends on consult, resulting in a
+lean and simple to maintain functionality.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package consult-project-extra
+    :after consult
+    :straight (consult-project-extra :type git :host github :repo "Qkessler/consult-project-extra"))
+#+END_SRC
 
 *** kind-icon
 #+BEGIN_SRC emacs-lisp
@@ -2076,6 +2107,7 @@ locations. The =default-directory= variable is not changed in the process.
 *** embark-consult
 #+BEGIN_SRC emacs-lisp
   (use-package embark-consult
+    :after (embark consult)
     :hook
     (embark-collect-mode . consult-preview-at-point-mode))
 #+END_SRC
