@@ -499,9 +499,6 @@ I still feel safer when having a backup. Save backup files to a dedicated
 directory.
 
 #+BEGIN_SRC emacs-lisp
-  (with-eval-after-load 'tramp
-    (add-to-list 'tramp-backup-directory-alist
-             (cons tramp-file-name-regexp nil)))
   (setq delete-old-versions t)
   ;; Backup also files under VC.
   (setq version-control t
@@ -3373,6 +3370,16 @@ Cross-referencing.
 #+END_SRC
 
 ** Tramp
+#+BEGIN_SRC emacs-lisp
+  (use-package tramp
+    :straight (:type built-in)
+    :custom
+    (tramp-shell-prompt-pattern "\\(?:^\\|\n\\|\x0d\\)[^]#$%>\n]*#?[]#$%>] *\\(\e\\[[0-9;]*[a-zA-Z] *\\)*")
+    :config
+    (add-to-list 'tramp-backup-directory-alist  (cons tramp-file-name-regexp nil))
+    (setenv "SHELL" "/bin/bash"))
+#+END_SRC
+
 ** Spelling
 *** Dictionary
 #+BEGIN_SRC emacs-lisp
