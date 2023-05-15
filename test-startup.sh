@@ -19,7 +19,6 @@ ${EMACS:=emacs} -nw --batch \
                                (load-path (delq default-directory load-path)))
                             (load-file user-init-file)
                             (run-hooks (quote after-init-hook))
-                            (all-the-icons-install-fonts t)
-                            (nerd-icons-install-fonts t)))'
+                            (+update-packages)))'
 
 echo "Startup successful"
