@@ -273,6 +273,7 @@ For the love of all that is holy, do not continue with untrusted connections.
     :custom
     (gnutls-verify-error t)
     (gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+    (gnutls-min-prime-bits 3072)
     :config
     (add-to-list 'gnutls-trustfiles "/etc/ssl/cert.pem"))
 #+END_SRC
