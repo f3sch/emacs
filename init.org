@@ -2915,8 +2915,7 @@ common conventions.
 * EMail
 #+BEGIN_SRC emacs-lisp
   (use-package mu4e
-    :unless (or (eq system-type 'darwin) (memq window-system '(mac ns)))
-    :commands mu4e
+    :commands mu4e mu4e-compose-new
     :init
     (let ((mu4e-path "/usr/local/share/emacs/site-lisp/mu/mu4e"))
       (when (file-directory-p mu4e-path)
@@ -2925,16 +2924,103 @@ common conventions.
     ;; use mu4e for e-mail in emacs
     (setq mail-user-agent 'mu4e-user-agent)
 
+    (defvar +mu4e-header-colorized-faces
+      '(all-the-icons-green
+        all-the-icons-lblue
+        all-the-icons-purple-alt
+        all-the-icons-blue-alt
+        all-the-icons-purple
+        all-the-icons-yellow)
+      "Faces to use when coloring folders and account stripes.")
+
+    (defun +mu4e--str-color-face (str &optional offset)
+      "Select a face from `+mu4e-header-colorized-faces' based on
+  STR and any integer OFFSET."
+      (let* ((str-sum (apply #'+ (mapcar (lambda (c) (% c 3)) str)))
+             (color (nth (% (+ str-sum (if offset offset 0))
+                            (length +mu4e-header-colorized-faces))
+                         +mu4e-header-colorized-faces)))
+        color))
+
+    (defun +mu4e-colorize-str (str &optional unique herring)
+      "Apply a face from `+mu4e-header-colorized-faces' to STR.
+  If HERRING is set, it will be used to determine the face instead of STR.
+  Will try to make unique when non-nil UNIQUE,
+  a quoted symbol for a alist of current strings and faces provided."
+      (unless herring
+        (setq herring str))
+      (put-text-property
+       0 (length str)
+       'face
+       (list
+        (if (not unique)
+            (+mu4e--str-color-face herring str)
+          (let ((unique-alist (eval unique)))
+            (unless (assoc herring unique-alist)
+              (if (> (length unique-alist) (length +mu4e-header-colorized-faces))
+                  (push (cons herring (+mu4e--str-color-face herring)) unique-alist)
+                (let ((offset 0) color color?)
+                  (while (not color)
+                    (setq color? (+mu4e--str-color-face herring offset))
+                    (if (not (rassoc color? unique-alist))
+                        (setq color color?)
+                      (setq offset (1+ offset))
+                      (when (> offset (length +mu4e-header-colorized-faces))
+                        (message "Warning: +mu4e-colorize-str was called with non-unique-alist UNIQUE-alist alist.")
+                        (setq color (+mu4e--str-color-face herring)))))
+                  (push (cons herring color) unique-alist)))
+              (set unique unique-alist))
+            (cdr (assoc herring unique-alist))))
+        'default)
+       str)
+      str)
+
+    ;; Add a column to display what email account the email belongs to,
+    ;; and an account color stripe column
+    (defvar +mu4e-header--maildir-colors nil)
+    (add-to-list 'mu4e-header-info-custom
+                 '(:account .
+                            (:name "Account"
+                                   :shortname "Account"
+                                   :help "Which account/maildir this email belongs to"
+                                   :function
+                                   (lambda (msg)
+                                     (let ((maildir (replace-regexp-in-string
+                                                     "\\`/?\\([^/]+\\)/.*\\'" "\\1"
+                                                     (mu4e-message-field msg :maildir))))
+                                       (+mu4e-colorize-str
+                                        (replace-regexp-in-string
+                                         "^gmail"
+                                         (propertize "g" 'face 'bold-italic)
+                                         maildir)
+                                        '+mu4e-header--maildir-colors
+                                        maildir))))))
+    (add-to-list 'mu4e-header-info-custom
+                 '(:account-stripe .
+                                   (:name "Account"
+                                          :shortname "▐"
+                                          :help "Which account/maildir this email belongs to"
+                                          :function
+                                          (lambda (msg)
+                                            (let ((account
+                                                   (replace-regexp-in-string
+                                                    "\\`/?\\([^/]+\\)/.*\\'" "\\1"
+                                                    (mu4e-message-field msg :maildir))))
+                                              (propertize
+                                               (+mu4e-colorize-str "▌" '+mu4e-header--maildir-colors account)
+                                               'help-echo account))))))
+
     ;; the headers to show in the headers list -- a pair of a field
     ;; and its width, with `nil' meaning 'unlimited'
     ;; better only use that for the last field.
     ;; These are the defaults:
     (setq mu4e-headers-fields
-          '((:flags . 10)
+          '((:account-stripe . 1)
+            (:flags . 12)
             (:from-or-to . 25)
+            (:human-date . 8)
             (:recipnum . 2)
-            (:subject . 100)
-            (:human-date . 8))
+            (:subject . 100))
           mu4e-headers-date-format "%d/%m/%y"
           mu4e-headers-time-format "⧖ %H:%M"
           mu4e-headers-results-limit 1000
@@ -2944,8 +3030,10 @@ common conventions.
           mu4e-get-mail-command "mbsync --all --config ~/.config/mbsync/config"
           mu4e-update-interval 300
           mu4e-alert-max-messages-to-process 1000
+
+
+          mu4e-eldoc-support t
           mu4e-attachment-dir "~/Downloads"
-          mu4e-use-fancy-chars t
           mu4e-completing-read-function 'completing-read
           mu4e-index-cleanup t ;; do a full cleanup check
           mu4e-index-lazy-check t ;; dont consider up-to-date dirs
@@ -2997,9 +3085,6 @@ common conventions.
     (setq mu4e-compose-reply-ignore-address
           '("notifications@github\\.com"
             ".*@noreply\\.github\\.com"))
-
-
-    (setq mu4e-eldoc-support t)
 
     (setq mu4e-contexts
           `( ,(make-mu4e-context
@@ -3123,13 +3208,64 @@ common conventions.
 
     ;; compose with the current context is no context matches; default
     ;; is to ask
-    (setq mu4e-compose-context-policy nil))
+    (setq mu4e-compose-context-policy nil)
+
+
+    ;; Icons
+    (defun +mu4e--get-string-width (str)
+      "Return the width in pixels of a string in the current
+  window's default font. If the font is mono-spaced, this
+  will also be the width of all other printable characters."
+      (let ((window (selected-window))
+            (remapping face-remapping-alist))
+        (with-temp-buffer
+          (make-local-variable 'face-remapping-alist)
+          (setq face-remapping-alist remapping)
+          (set-window-buffer window (current-buffer))
+          (insert str)
+          (car (window-text-pixel-size)))))
+
+    (cl-defun +mu4e-normalised-icon (name &key set color height v-adjust)
+      "Convert :icon declaration to icon"
+      (let* ((icon-set (intern (concat "all-the-icons-" (or set "faicon"))))
+             (v-adjust (or v-adjust 0.02))
+             (height (or height 0.8))
+             (icon (if color
+                       (apply icon-set `(,name :face ,(intern (concat "all-the-icons-" color)) :height ,height :v-adjust ,v-adjust))
+                     (apply icon-set `(,name  :height ,height :v-adjust ,v-adjust))))
+             (icon-width (+mu4e--get-string-width icon))
+             (space-width (+mu4e--get-string-width " "))
+             (space-factor (- 2 (/ (float icon-width) space-width))))
+        (concat (propertize " " 'display `(space . (:width ,space-factor))) icon)))
+
+    (setq mu4e-use-fancy-chars t
+          mu4e-headers-draft-mark      (cons "D" (+mu4e-normalised-icon "pencil"))
+          mu4e-headers-flagged-mark    (cons "F" (+mu4e-normalised-icon "flag"))
+          mu4e-headers-new-mark        (cons "N" (+mu4e-normalised-icon "sync" :set "material" :height 0.8 :v-adjust -0.10))
+          mu4e-headers-passed-mark     (cons "P" (+mu4e-normalised-icon "arrow-right"))
+          mu4e-headers-replied-mark    (cons "R" (+mu4e-normalised-icon "reply"))
+          mu4e-headers-seen-mark       (cons "S" "") ;(+mu4e-normalised-icon "eye" :height 0.6 :v-adjust 0.07 :color "dsilver"))
+          mu4e-headers-trashed-mark    (cons "T" (+mu4e-normalised-icon "trash"))
+          mu4e-headers-attach-mark     (cons "a" (+mu4e-normalised-icon "file-text-o" :color "silver"))
+          mu4e-headers-encrypted-mark  (cons "x" (+mu4e-normalised-icon "lock"))
+          mu4e-headers-signed-mark     (cons "s" (+mu4e-normalised-icon "certificate" :height 0.7 :color "dpurple"))
+          mu4e-headers-unread-mark     (cons "u" (+mu4e-normalised-icon "eye-slash" :v-adjust 0.05))
+          mu4e-headers-list-mark       (cons "l" (+mu4e-normalised-icon "sitemap" :set "faicon"))
+          mu4e-headers-personal-mark   (cons "p" (+mu4e-normalised-icon "user"))
+          mu4e-headers-calendar-mark   (cons "c" (+mu4e-normalised-icon "calendar")))
+
+    ;; Nicer threading arrows
+    (setq mu4e-headers-thread-single-orphan-prefix '("─>" . "─▶")
+          mu4e-headers-thread-orphan-prefix        '("┬>" . "┬▶ ")
+          mu4e-headers-thread-connection-prefix    '("│ " . "│ ")
+          mu4e-headers-thread-first-child-prefix   '("├>" . "├▶")
+          mu4e-headers-thread-child-prefix         '("├>" . "├▶")
+          mu4e-headers-thread-last-child-prefix    '("└>" . "╰▶")))
 #+END_SRC
 
 ** Patch-View
 #+BEGIN_SRC emacs-lisp
   (use-package message-view-patch
-    :unless (eq system-type 'darwin)
     :after mu4e
     :hook (gnus-part-display . message-view-patch-highlight))
 #+END_SRC
@@ -3149,22 +3285,6 @@ I’ll activate the modeline notification.
     (mu4e-alert-set-default-style 'notifications)
     :config
     (setq mu4e-alert-interesting-mail-query "flag:unread"))
-#+END_SRC
-
-** Icons
-#+BEGIN_SRC emacs-lisp
-  (if (display-graphic-p)
-      (setq mu4e-headers-draft-mark `("D" . ,(all-the-icons-faicon "pencil" :height 0.8))
-            mu4e-headers-flagged-mark `("F" . ,(all-the-icons-faicon "flag" :height 0.8))
-            mu4e-headers-new-mark `("N" . ,(all-the-icons-faicon "rss" :height 0.8))
-            mu4e-headers-passed-mark `("P" . ,(all-the-icons-faicon "check" :height 0.8))
-            mu4e-headers-replied-mark `("R" . ,(all-the-icons-faicon "reply" :height 0.8))
-            mu4e-headers-seen-mark `("S" . ,(all-the-icons-faicon "eye" :height 0.8))
-            mu4e-headers-unread-mark `("u" . ,(all-the-icons-faicon "eye-slash" :height 0.8))
-            mu4e-headers-trashed-mark `("T" . ,(all-the-icons-faicon "trash" :height 0.8))
-            mu4e-headers-attach-mark `("a" . ,(all-the-icons-faicon "paperclip" :height 0.8))
-            mu4e-headers-encrypted-mark `("x" . ,(all-the-icons-faicon "lock" :height 0.8))
-            mu4e-headers-signed-mark `("s" . ,(all-the-icons-faicon "certificate" :height 0.8))))
 #+END_SRC
 
 * Tools
