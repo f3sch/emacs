@@ -1845,29 +1845,57 @@ For minibuffer completions.
 
 #+BEGIN_SRC emacs-lisp
   (use-package vertico
-    :hook
-    (after-init . vertico-mode)
-    :init
-    (vertico-mode)
-    (vertico-mouse-mode)
-    (vertico-multiform-mode)
     :straight (vertico :files (:defaults "extensions/*")
-               :includes (vertico-multiform))
+                       :includes (vertico-multiform))
+    :hook (after-init . vertico-mode)
     :bind
     (:map vertico-map
-      ("C-j" . vertico-next)
-      ("C-k" . vertico-previous)
-      ("C-f" . vertico-exit)
-      :map minibuffer-local-map
-      ("M-h" . backward-kill-word))
+          ("RET" . vertico-directory-enter)
+          ("DEL" . vertico-directory-delete-char)
+          ("M-DEL" . vertico-directory-delete-word)
+          ("C-j" . vertico-next)
+          ("C-k" . vertico-previous)
+          ("C-f" . vertico-exit)
+          :map minibuffer-local-map
+          ("M-h" . backward-kill-word))
     :custom
     (vertico-multiform-categories
-        '((buffer (vertico-sort-function . copy-sequence))))
+     '((buffer (vertico-sort-function . copy-sequence))))
     (vertico-preselect 'first)
     (vertico-cycle t)
     (vertico-count 10)
     (vertico-count-format '("%-5s " . "%2$s"))
-    (vertico-resize t))
+    (vertico-resize t)
+
+
+    :config
+    ;; Cleans up path when moving directories with shadowed paths syntax, e.g.
+    ;; cleans ~/foo/bar/// to /, and ~/foo/bar/~/ to ~/.
+    (add-hook 'rfn-eshadow-update-overlay-hook #'vertico-directory-tidy)
+    (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+
+    ;; modes
+    (vertico-mode)
+    (vertico-mouse-mode)
+    (vertico-multiform-mode)
+
+    ;; Prefix the current candidate with “» “.
+    (defvar +vertico-current-arrow t)
+
+    (cl-defmethod vertico--format-candidate :around
+      (cand prefix suffix index start &context ((and +vertico-current-arrow
+                                                     (not (bound-and-true-p vertico-flat-mode)))
+                                                (eql t)))
+      (setq cand (cl-call-next-method cand prefix suffix index start))
+      (if (bound-and-true-p vertico-grid-mode)
+          (if (= vertico--index index)
+              (concat #("▶" 0 1 (face vertico-current)) cand)
+            (concat #("_" 0 1 (display " ")) cand))
+        (if (= vertico--index index)
+            (concat
+             #(" " 0 1 (display (left-fringe right-triangle vertico-current)))
+             cand)
+          cand))))
 #+END_SRC
 
 *** Prescient Integration
