@@ -906,7 +906,6 @@ Make History a bit longer.
 
 #+BEGIN_SRC emacs-lisp
   (setq-default history-length 10000)
-  (setq-default prescient-history-length 10000)
 #+END_SRC
 
 Persistent History, have some persistency.
@@ -1769,11 +1768,15 @@ over that as well.
 #+BEGIN_SRC emacs-lisp
   (use-package prescient
     :custom
-    (prescient-history-length 1000)
+    (prescient-history-length 10000)
     (prescient-save-file (expand-file-name "prescient-history.el" +state-dir))
-    (prescient-sort-full-matches-first t)
+    (prescient-sort-full-matches-first t) ; Works well with `initialism'.
+    (prescient-filter-method '(literal initialism prefix regexp))
+    (prescient-use-char-folding t)
+    (prescient-use-case-folding 'smart)
+    (prescient-sort-length-enable t)
     :config
-    (prescient-persist-mode +1))
+    (prescient-persist-mode))
 #+END_SRC
 
 *** Orderless Style
@@ -1869,7 +1872,9 @@ For minibuffer completions.
 
 *** Prescient Integration
 #+BEGIN_SRC emacs-lisp
-  (use-package vertico-prescient)
+  (use-package vertico-prescient
+    :config
+    (vertico-prescient-mode))
 #+END_SRC
 
 ** consult
@@ -2202,7 +2207,9 @@ provides an alternative overlay-based display.
 
 *** Prescient Integration
 #+BEGIN_SRC emacs-lisp
-  (use-package corfu-prescient)
+  (use-package corfu-prescient
+    :config
+    (corfu-prescient-mode))
 #+END_SRC
 
 *** corfu-popupinfo
