@@ -2279,6 +2279,11 @@ The built in project management library.
 #+BEGIN_SRC emacs-lisp
   (use-package project
     :straight (:type built-in)
+    :config
+    (defun +project-root (&optional dir)
+      (when-let ((project (project-current nil (or dir default-directory))))
+        (project-root project)))
+
     :custom
     (project-list-file (expand-file-name "projects.el" +state-dir))
     (project-vc-extra-root-markers '(".projectile.el" ".project.el" ".project")))
@@ -3550,6 +3555,38 @@ Cross-referencing.
     (evil-set-initial-state 'compilation-mode 'normal))
 #+END_SRC
 
+This package provides a command that can be used to run compilation commands
+that match one or more predicates for the current directory or project. This can
+be used for example to list all of the makefile targets of a project and then
+execute one.
+#+BEGIN_SRC emacs-lisp
+  (use-package compile-multi
+    :straight (compile-multi :type git :host github
+                             :repo "mohkale/compile-multi")
+    :custom
+    (compile-multi-default-directory #'+project-root)
+    :config
+    ;;; C++
+    ;; O2
+    (push '("O2"
+            ("aliBuild:build" . "cd $(dirname $ALIBUILD_WORK_DIR) && alibBuild build O2 --debug"))
+          compile-multi-config)
+
+    ;; ELisp
+    (defun +byte-compile-this-file ()
+      (byte-compile-file (buffer-file-name)))
+    (push '(emacs-lisp-mode
+            ("emacs:bytecompile" . ,#'+byte-compile-this-file))
+          compile-multi-config)
+
+    ;; Makefile
+    (push '((file-exists-p "Makefile")
+            ("make:build" . "make build")
+            ("make:test" . "make test")
+            ("make:all" . "make all"))
+          compile-multi-config))
+#+END_SRC
+
 ** Info
 #+BEGIN_SRC emacs-lisp
   (use-package info
@@ -3960,7 +3997,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "g" '(consult-git-grep :wk "Git Grep")
     "o" '(consult-project-extra-find :wk "Find Endpoint")
     "O" '(consult-project-extra-find-other-window :wk "Find Endpoint other Window")
-    "c" '(project-compile :wk "Compile Project")
+    "c" '(compile-multi :wk "Compile Project")
     "v" '(project-vc-dir :wk "Open vc Dialog")
     "s" '(project-shell :wk "Open Shell")
     "d" '(project-dired :wk "Open Dired"))
