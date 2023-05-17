@@ -917,11 +917,11 @@ Persistent History, have some persistency.
     :custom
     (savehist-file (concat +cache-dir "savehist"))
     (savehist-additional-variables '(mark-ring global-mark-ring
-                           search-ring regexp-search-ring
-                           register-alist
-                           kill-ring
+                           search-ring regexp-search-ring compile-history
+                           register-alist kill-ring
                            extended-command-history))
-    (savehist-autosave-interval 300))
+    (savehist-save-minibuffer-history t)
+    (savehist-autosave-interval 60))
 #+END_SRC
 
 ** Understand the more common ~sentence~
@@ -2154,19 +2154,18 @@ provides an alternative overlay-based display.
 #+begin_src emacs-lisp
   (use-package corfu
     :straight (corfu :type git :host github :repo "minad/corfu"
-             :files (:defaults "extensions/*")
-             :includes (corfu-history
-                corfu-popupinfo))
-    :demand t
+                     :files (:defaults "extensions/*")
+                     :includes (corfu-history
+                                corfu-popupinfo))
     :bind (("M-/" . completion-at-point)
-       :map corfu-map
-       ("C-n"      . corfu-next)
-       ("C-p"      . corfu-previous)
-       ("<escape>" . corfu-quit)
-       ("<return>" . corfu-insert)
-       ("M-d"      . corfu-info-documentation)
-       ("M-l"      . corfu-info-location)
-       ("M-."      . corfu-move-to-minibuffer))
+           :map corfu-map
+           ("C-n"      . corfu-next)
+           ("C-p"      . corfu-previous)
+           ("<escape>" . corfu-quit)
+           ("<return>" . corfu-insert)
+           ("M-d"      . corfu-info-documentation)
+           ("M-l"      . corfu-info-location)
+           ("M-."      . corfu-move-to-minibuffer))
     :custom
     ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
     ;; want to perform completion
@@ -2204,24 +2203,26 @@ provides an alternative overlay-based display.
     (defun corfu-enable-always-in-minibuffer ()
       "Enable Corfu in the minibuffer if Vertico/Mct are not active."
       (unless (or (bound-and-true-p mct--active) ; Useful if I ever use MCT
-          (bound-and-true-p vertico--input))
-    (setq-local corfu-auto nil)       ; Ensure auto completion is disabled
-    (corfu-mode 1)))
+                  (bound-and-true-p vertico--input))
+        (setq-local corfu-auto nil)       ; Ensure auto completion is disabled
+        (corfu-mode 1)))
 
     (defun corfu-move-to-minibuffer ()
       (interactive)
       (let (completion-cycle-threshold completion-cycling)
-    (apply #'consult-completion-in-region completion-in-region--data)))
+        (apply #'consult-completion-in-region completion-in-region--data)))
     :config
     (global-corfu-mode)
     (corfu-history-mode)
+    (with-eval-after-load 'savehist
+      (add-to-list 'savehist-additional-variables 'corfu-history))
 
     ;; In EShell enable some special options.
     (add-hook 'eshell-mode-hook
-          (lambda () (setq-local corfu-quit-at-boundary t
-                     corfu-quit-no-match t
-                     corfu-auto nil)
-        (corfu-mode)))
+              (lambda () (setq-local corfu-quit-at-boundary t
+                                     corfu-quit-no-match t
+                                     corfu-auto nil)
+                (corfu-mode)))
 
     ;; Show some information in eldoc.
     (eldoc-add-command #'corfu-insert)
