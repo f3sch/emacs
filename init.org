@@ -2878,6 +2878,10 @@ common conventions.
   (use-package cmake-mode
     :mode (rx (or (and "CMakeLists.txt" eol) ".cmake")))
 
+  (use-package cmake-font-lock
+    :straight (:host github :repo "Lindydancer/cmake-font-lock" :files (:defaults "*"))
+    :hook (cmake-mode . cmake-font-lock-activate))
+
   (use-package cmake-ts-mode
     :mode (rx (or (and "CMakeLists.txt" eol) ".cmake")))
 #+END_SRC
