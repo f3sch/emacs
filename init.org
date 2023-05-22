@@ -3098,6 +3098,10 @@ common conventions.
     (setq message-cite-reply-position 'below ;; never top post!
           message-kill-buffer-on-exit t)
 
+    ;; Search like GMail
+    (setq mu4e-search-include-related t
+          mu4e-search-skip-duplicates t)
+
     (add-to-list 'mm-body-charset-encoding-alist '(utf-8 . base64))
 
     (setq mu4e-bookmarks
@@ -3244,6 +3248,7 @@ common conventions.
                            "Felix\n"
                            "(GPG: 0x997C87E6BE5239F0)"))))))
 
+
     ;; set `mu4e-context-policy` and `mu4e-compose-policy` to tweak when
     ;; mu4e should guess or ask the correct context, e.g.
 
@@ -3254,6 +3259,55 @@ common conventions.
     ;; compose with the current context is no context matches; default
     ;; is to ask
     (setq mu4e-compose-context-policy nil)
+
+    ;;; Actions
+    (require 'mu4e-actions)
+    (defun +mu4e-view-save-all-attachments (&optional msg)
+      "Save all MIME parts from current mu4e gnus view buffer."
+      ;; Copied from mu4e-view-save-attachments
+      (interactive "P")
+      (if (and (eq major-mode 'mu4e-view-mode)
+               (derived-mode-p 'gnus-article-mode))
+          (let* ((msg (or msg (mu4e-message-at-point)))
+                 (id (+clean-file-name (mu4e-message-field msg :subject) :downcase))
+                 (attachdir (expand-file-name id mu4e-attachment-dir))
+                 (parts (mu4e~view-gather-mime-parts))
+                 (handles '())
+                 (files '())
+                 dir)
+            (mkdir attachdir t)
+            (dolist (part parts)
+              (let ((fname (or (cdr (assoc 'filename (assoc "attachment" (cdr part))))
+                               (seq-find #'stringp
+                                         (mapcar (lambda (item) (cdr (assoc 'name item)))
+                                                 (seq-filter 'listp (cdr part)))))))
+                (when fname
+                  (push `(,fname . ,(cdr part)) handles)
+                  (push fname files))))
+            (if files
+                (progn
+                  (setq dir
+                        (if current-prefix-arg (read-directory-name "Save to directory: ")
+                          attachdir))
+                  (cl-loop for (f . h) in handles
+                           when (member f files)
+                           do (mm-save-part-to-file h
+                                                    (+file-name-incremental
+                                                     (expand-file-name f dir)))))
+              (mu4e-message "No attached files found")))
+        (mu4e-error "Not in `mu4e-view-mode' nor in `gnus-article-mode'.")))
+
+    ;; View
+    (appendq! mu4e-view-actions
+              '(("Apply git patches" . mu4e-action-git-apply-patch)
+                ("Mapply git am patch" . mu4e-action-git-apply-mbox)
+                ("save all attachments" . +mu4e-view-save-all-attachments)
+                ("ViewInBrowser" . mu4e-action-view-in-browser)))
+    ;; Header
+    (appendq! mu4e-headers-actions
+              '(("Apply git patches" . mu4e-action-git-apply-patch)
+                ("Mapply git am patch" . mu4e-action-git-apply-mbox)))
+
 
 
     ;; Icons
