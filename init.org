@@ -4197,6 +4197,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
   (+leader-key
     :infix "t"
     "" '(:ignore t :wk "Toggle")
+    "c" '(display-fill-column-indicator-mode :wk "Fill Column")
     "d" '(disk-usage-here :wk "Show Disk Usage Here"))
 #+END_SRC
 
