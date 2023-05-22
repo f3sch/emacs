@@ -3662,13 +3662,18 @@ execute one.
     :config
     ;;; C++
     ;; O2
-    (push '("O2"
-            ("aliBuild:build" . "cd $(dirname $ALIBUILD_WORK_DIR) && alibBuild build O2 --debug"))
+    (setq compile-multi-config nil)
+    (push '((string-match-p (regexp-quote "O2") (project-root (project-current t)))
+            ("aliBuild:build" (format "cd %s && aliBuild build O2 --debug" (file-name-directory (getenv "ALIBUILD_WORK_DIR")))
+             ))
           compile-multi-config)
+
+    (setenv "ALIBUILD_WORK_DIR" "/home/f3sch/git/alice/sw")
 
     ;; ELisp
     (defun +byte-compile-this-file ()
       (byte-compile-file (buffer-file-name)))
+
     (push '(emacs-lisp-mode
             ("emacs:bytecompile" . ,#'+byte-compile-this-file))
           compile-multi-config)
