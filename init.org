@@ -3891,6 +3891,15 @@ a heatmap out of it.
     (add-hook 'Info-selection-hook 'info-colors-fontify-node))
 #+END_SRC
 
+** Emacs Bugs
+Unbelievably, but true.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package debbugs
+    :straight (:type built-in)
+    :defer t)
+#+END_SRC
+
 * Security
 ** EPG
 #+BEGIN_SRC emacs-lisp
