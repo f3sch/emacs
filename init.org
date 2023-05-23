@@ -2957,6 +2957,17 @@ common conventions.
     (gdb-many-windows t))
 #+END_SRC
 
+*** EDebug
+#+BEGIN_SRC emacs-lisp
+  (use-package edebug
+    :straight (:type built-in)
+    :custom
+    ;; do not truncate print results in Edebug
+    (edebug-print-level nil)
+    (edebug-print-length nil))
+#+END_SRC
+
+
 * EMail
 #+BEGIN_SRC emacs-lisp
   (use-package mu4e
