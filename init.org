@@ -693,7 +693,7 @@ This also applies to sexp expressions.
   ;; more consistent default than 8-space tabs. It can be changed on a per-mode
   ;; basis anyway (and is, where tabs are the canonical style, like go-mode).
   (setq-default indent-tabs-mode nil
-        tab-width 4)
+        tab-width 8)
 
   ;; Only indent the line when at BOL or in a line's indentation. Anywhere else,
   ;; insert literal indentation.
@@ -1435,6 +1435,34 @@ lines.
     (adaptive-wrap-extra-indent 2)
     :init
     (adaptive-wrap-prefix-mode))
+#+END_SRC
+
+** Indentation
+Detect indentation automatically.
+#+BEGIN_SRC emacs-lisp
+  (use-package dtrt-indent
+    :config
+    (dtrt-indent-global-mode))
+#+END_SRC
+
+Minor mode to aggressively keep your code always indented
+#+BEGIN_SRC emacs-lisp
+  (use-package aggressive-indent
+    :hook (after-init . global-aggressive-indent-mode)
+    :config
+    ;; Disable in some modes
+    (dolist (mode '(gitconfig-mode asm-mode web-mode html-mode css-mode go-mode scala-mode prolog-inferior-mode))
+      (push mode aggressive-indent-excluded-modes))
+
+    ;; Disable in some commands
+    (add-to-list 'aggressive-indent-protected-commands #'delete-trailing-whitespace t)
+
+    ;; Be slightly less aggressive in C/C++/C#/Java/Go/Swift
+    (add-to-list 'aggressive-indent-dont-indent-if
+                 '(and (derived-mode-p 'c-mode 'c++-mode 'csharp-mode
+                                       'java-mode 'go-mode 'swift-mode)
+                       (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
+                                           (thing-at-point 'line))))))
 #+END_SRC
 
 * Windows/Buffers
@@ -2847,6 +2875,38 @@ Giving parenthesis some brains.
     :commands rainbow-delimiters-mode)
 #+END_SRC
 
+** Prism
+#+BEGIN_SRC emacs-lisp
+  (use-package prism
+    :disabled t
+    :straight (:type git :fetcher github :repo "alphapapa/prism.el")
+    :hook (((json-mode yaml-mode emacs-lisp-mode lisp-mode) . prism-mode)
+           ((python-mode) . prism-whitespace-mode))
+    :custom
+    (prism-num-faces 16)
+    :config
+  (prism-set-colors
+    :desaturations '(0) ; do not change---may lower the contrast ratio
+    :lightens '(0)      ; same
+    :colors (modus-themes-with-colors
+              (list fg-main
+                    magenta
+                    cyan-cooler
+                    magenta-cooler
+                    blue
+                    magenta-warmer
+                    cyan-warmer
+                    red-cooler
+                    green
+                    fg-main
+                    cyan
+                    yellow
+                    blue-warmer
+                    red-warmer
+                    green-cooler
+                    yellow-faint))))
+#+END_SRC
+
 ** Code
 *** Assembly
 #+BEGIN_SRC emacs-lisp
@@ -2918,16 +2978,23 @@ common conventions.
   (use-package cc-mode
     :straight (:type built-in)
     :custom
+    (c-basic-offset 4)
     (c-default-style '((java-mode . "linux")
                        (awk-mode . "awk")
                        (other . "linux"))))
 #+END_SRC
 
 #+Begin_SRC emacs-lisp
-    (use-package c-ts-mode
-      :straight (:type built-in)
-      :custom
-      (c-ts-mode-indent-style 'linux))
+  (use-package c-ts-mode
+    :straight (:type built-in)
+    :custom
+    (c-ts-mode-indent-offst 4)
+    (c-ts-mode-indent-style 'linux))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package modern-cpp-font-lock
+    :hook ((c++-mode c++-ts-mode) . modern-c++-font-lock-mode))
 #+END_SRC
 
 **** CMake
@@ -3023,7 +3090,6 @@ common conventions.
     (edebug-print-level nil)
     (edebug-print-length nil))
 #+END_SRC
-
 
 * EMail
 #+BEGIN_SRC emacs-lisp
