@@ -2421,6 +2421,8 @@ enable this mode globally.
   (use-package magit-todos
     :after (magit hl-todo)
     :custom
+    ;; make colon optional
+    (magit-todos-keyword-suffix "\\(?:([^)]+)\\)?:?")
     (magit-todos-ignore-case t))
 #+END_SRC
 
