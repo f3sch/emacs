@@ -2471,6 +2471,52 @@ them, and fork projects among other things.
       "et" #'forge-edit-topic-title))
 #+END_SRC
 
+*** Forge Search
+#+BEGIN_SRC emacs-lisp
+  (use-package forge-search
+    :straight (:type git :host github :repo "eatse21/forge-search.el")
+    :after forge
+    :general
+    ((forge-topic-mode-map
+      forge-topic-list-mode-map
+      forge-issue-list-mode-map
+      forge-pullreq-list-mode-map
+      forge-notifications-mode-map
+      forge-repository-list-mode-map)
+     "s" 'forge-search))
+#+END_SRC
+
+*** Code Review
+#+BEGIN_SRC emacs-lisp
+  (use-package code-review
+    :after (magit forge)
+    :custom
+    (code-review-db-database-file (concat +data-dir "code-review/code-review-db-file.sqlite"))
+    (code-review-log-file (concat +data-dir "code-review/code-review-error.log"))
+    (code-review-download-dir (concat +data-dir "code-review/"))
+    (code-review-auth-login-marker 'forge)
+    (code-review-fill-column 80)
+    :config
+    (defun +magit/start-code-review (arg)
+      (interactive "P")
+      (call-interactively
+       (if (or arg (not (featurep 'forge)))
+           #'code-review-start
+         #'code-review-forge-pr-at-point)))
+    (transient-append-suffix 'magit-merge "i"
+      '("y" "Review pull request" +magit/start-code-review))
+    (transient-append-suffix 'forge-dispatch "c u"
+      '("c r" "Review pull request" +magit/start-code-review)))
+#+END_SRC
+
+*** Bug References
+#+BEGIN_SRC emacs-lisp
+  (use-package bug-reference
+    :straight (:type built-in)
+    :hook ((text-mode . bug-reference-mode)
+           (prog-mode . bug-reference-prog-mode)))
+#+END_SRC
+
 ** Git Gutter
 #+BEGIN_SRC emacs-lisp
   (use-package git-gutter
