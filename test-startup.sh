@@ -19,6 +19,7 @@ ${EMACS:=emacs} -nw --batch \
                                (load-path (delq default-directory load-path)))
                             (load-file user-init-file)
                             (run-hooks (quote after-init-hook))
-                            (+update-packages)))'
+                            (+update-packages)
+                            (message "Hello from Emacs!")))'
 
 echo "Startup successful"
