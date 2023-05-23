@@ -1325,7 +1325,6 @@ Nice visual features.
 *** Doom
 #+BEGIN_SRC emacs-lisp
   (use-package doom-themes
-    :disabled t
     :ensure t
     :config
     ;; Global settings (defaults)
