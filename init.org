@@ -3795,7 +3795,19 @@ Correct misspelled words using vertico
     (flymake-note-bitmap '(+dot-fringe-bitmap compilation-info))
     (flymake-error-bitmap '(+dot-fringe-bitmap compilation-error))
     (flymake-warning-bitmap '(+dot-fringe-bitmap compilation-warning))
-
+    (flymake-fringe-indicator-position 'left-fringe)
+    (flymake-suppress-zero-counters t)
+    (flymake-start-on-flymake-mode t)
+    (flymake-no-changes-timeout nil)
+    (flymake-start-on-save-buffer t)
+    (flymake-proc-compilation-prevents-syntax-check t)
+    (flymake-wrap-around nil)
+    (flymake-mode-line-format
+     '("" flymake-mode-line-exception flymake-mode-line-counters))
+    (flymake-mode-line-counter-format
+     '(" " flymake-mode-line-error-counter
+       flymake-mode-line-warning-counter
+       flymake-mode-line-note-counter ""))
     :init
     (evil-declare-motion 'flymake-goto-next-error)
     (evil-declare-motion 'flymake-goto-prev-error)
