@@ -2110,6 +2110,16 @@ lean and simple to maintain functionality.
     :straight (consult-project-extra :type git :host github :repo "Qkessler/consult-project-extra"))
 #+END_SRC
 
+*** consult-flyspell
+#+BEGIN_SRC emacs-lisp
+  (use-package consult-flyspell
+    :after (consult flyspell-correct)
+    :straight (consult-flyspell :type git :host gitlab :repo "OlMon/consult-flyspell" :branch "master")
+    :custom
+    (consult-flyspell-select-function 'flyspell-correct-at-point))
+#+END_SRC
+
+
 *** kind-icon
 #+BEGIN_SRC emacs-lisp
 (use-package kind-icon
