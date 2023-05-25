@@ -31,6 +31,7 @@ This avoids garbage collection during startup. Afterward, sensible defaults are 
 Asynchronous compilation and speed, enabled.
 
 #+begin_src emacs-lisp :tangle early-init.el
+  (setq comp-num-cpus (+ (/ (num-processors) 4) 1))
   (let ((path (expand-file-name "eln-cache/" (expand-file-name "emacs/" (or (getenv "XDG_CACHE_HOME") "~/.cache")))))
     (setq native-comp-eln-load-path (list path)
           native-compile-target-directory path))
@@ -138,6 +139,37 @@ A few useful variables to have.
   "State files contain long-lived local configuration data.")
 #+END_SRC
 
+** Use-Package
+#+begin_src emacs-lisp
+  (setq use-package-enable-imenu-support t
+        use-package-verbose (not (bound-and-true-p byte-compile-current-file))
+        use-package-expand-minimally t
+        use-package-compute-statistics nil)
+  (setq byte-compile-warnings '(cl-functions))
+  (setq ad-redefinition-action 'accept)
+#+end_src
+
+** Security
+For the love of all that is holy, do not continue with untrusted connections.
+
+*** GNUTLS
+#+BEGIN_SRC emacs-lisp
+  (use-package gnutls
+    :custom
+    (gnutls-verify-error t)
+    (gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+    (gnutls-min-prime-bits 3072)
+    :config
+    (add-to-list 'gnutls-trustfiles "/etc/ssl/cert.pem"))
+#+END_SRC
+
+*** NSM
+#+BEGIN_SRC emacs-lisp
+  (use-package nsm
+    :custom
+    (network-security-level 'high))
+#+END_SRC
+
 ** Bootstrap straight.el
 For now I use straight.el as a package manager.
 
@@ -212,16 +244,6 @@ Update command.
         (funcall fn))))
 #+END_SRC
 
-** Use-Package
-#+begin_src emacs-lisp
-  (setq use-package-enable-imenu-support t
-        use-package-verbose (not (bound-and-true-p byte-compile-current-file))
-        use-package-expand-minimally t
-        use-package-compute-statistics nil)
-  (setq byte-compile-warnings '(cl-functions))
-  (setq ad-redefinition-action 'accept)
-#+end_src
-
 ** No-littering
 Stop emacs from littering with sensible defaults to paths.
 
@@ -262,29 +284,6 @@ Although I do not care about startup time, I want to see it.
           #'(lambda () (report-time-since-load " [after-init]"))
           t)
 #+end_src
-
-** Security
-For the love of all that is holy, do not continue with untrusted connections.
-
-*** GNUTLS
-#+BEGIN_SRC emacs-lisp
-  (use-package gnutls
-    :straight (:type built-in)
-    :custom
-    (gnutls-verify-error t)
-    (gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-    (gnutls-min-prime-bits 3072)
-    :config
-    (add-to-list 'gnutls-trustfiles "/etc/ssl/cert.pem"))
-#+END_SRC
-
-*** NSM
-#+BEGIN_SRC emacs-lisp
-  (use-package nsm
-    :straight (:type built-in)
-    :custom
-    (network-security-level 'high))
-#+END_SRC
 
 * General
 ** Identity
