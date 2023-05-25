@@ -285,6 +285,14 @@ Although I do not care about startup time, I want to see it.
           t)
 #+end_src
 
+** Debugging
+#+BEGIN_SRC emacs-lisp
+  (defun +enable-debug ()
+    (interactive)
+    (setq debug-on-error t
+          debug-on-quit t))
+#+END_SRC
+
 * General
 ** Identity
 Some functionality uses this to identify you, e.g. GPG configuration, email
