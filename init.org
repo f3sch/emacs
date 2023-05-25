@@ -2527,6 +2527,8 @@ them, and fork projects among other things.
 *** Code Review
 #+BEGIN_SRC emacs-lisp
   (use-package code-review
+    :straight (code-review :host github :repo "phelrine/code-review"
+                     :branch "fix/closql-update")
     :after (magit forge)
     :custom
     (code-review-db-database-file (concat +data-dir "code-review/code-review-db-file.sqlite"))
