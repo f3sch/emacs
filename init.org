@@ -2906,7 +2906,7 @@ Giving parenthesis some brains.
                     yellow-faint))))
 #+END_SRC
 
-** Code
+** Languages
 *** Assembly
 #+BEGIN_SRC emacs-lisp
   (use-package asm-mode
@@ -2970,6 +2970,24 @@ common conventions.
     :init
     ;; Not sure why this isn't included by default.
     (put 'checkdoc-package-keywords-flag 'safe-local-variable #'booleanp))
+#+END_SRC
+
+**** makem.sh
+#+BEGIN_SRCemacs-lisp
+  (use-package makem
+    :straight (:type git :host github :repo "alphapapa/makem.sh"
+                     :files (:defaults "makem.sh"))
+    :commands makem
+    :general
+    (+local-leader-key
+      "m" '(makem :wk "Makem")))
+#+END_SRC
+
+**** Transient Showcase
+#+BEGIN_SRC emacs-lisp
+  (use-package transient-showcase
+    :straight '(transient-showcase
+                :type git :host github :repo "positron-solutions/transient-showcase"))
 #+END_SRC
 
 *** C/C++
