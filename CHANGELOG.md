@@ -2,6 +2,50 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.2.0 - 2023-05-31
+#### Bug Fixes
+- **(compile-multi)** fixed O2 - (027506d) - Felix Schlepper
+#### Build system
+- **(startup)** message from emacs - (e33b907) - Felix Schlepper
+#### Continuous Integration
+- **(cocogitto)** added - (07a8f54) - Felix Schlepper
+#### Features
+- **(bugs)** added debbugs - (88e4981) - Felix Schlepper
+- **(checkdoc)** added - (8ec5e95) - Felix Schlepper
+- **(cmake)** added font-lock-mode - (c27ecbf) - Felix Schlepper
+- **(compile)** added per project options - (08334b6) - Felix Schlepper
+- **(debug)** added func - (e150ca0) - Felix Schlepper
+- **(edebug)** added - (0492859) - Felix Schlepper
+- **(fill-column)** added toggle - (e64dda1) - Felix Schlepper
+- **(flyspell)** integration with consult - (2c333c8) - Felix Schlepper
+- **(github)** remove unused caching in action - (5b6ee71) - Felix Schlepper
+- **(gnus)** for newsreading - (11aa4b3) - Felix Schlepper
+- **(goto-addr)** enabled - (6a4a0f9) - Felix Schlepper
+- **(indentation)** automatically detect - (d786677) - Felix Schlepper
+- **(makem)** added - (4cbee06) - Felix Schlepper
+- **(minibuffer)** config - (8821791) - Felix Schlepper
+- **(mu4e)** icons - (9ab567a) - Felix Schlepper
+- **(prescient)** enabled missing modes and config - (2340fb1) - Felix Schlepper
+- **(project)** list file - (935c182) - Felix Schlepper
+- **(tramp)** copy path variable - (0232ad7) - Felix Schlepper
+- **(update)** loads of stuff - (7f17d29) - Felix Schlepper
+- **(vc)** forge-search, bug-reference - (77117c0) - Felix Schlepper
+- **(vertico)** configured - (ad79224) - Felix Schlepper
+#### Miscellaneous Chores
+- **(version)** v0.1.0 - (a9c7332) - Felix Schlepper
+#### Tweaks
+- **(code-review)** changed to fork until updated upstream - (ee069ba) - Felix Schlepper
+- **(corfu)** indent + history - (d1385b9) - Felix Schlepper
+- **(flymake)** prot's settings - (69cd890) - Felix Schlepper
+- **(ispell)** en_US default - (e7a915f) - Felix Schlepper
+- **(mu4e)** added actions - (8333b80) - Felix Schlepper
+- **(shell)** added env vars - (6fe1feb) - Felix Schlepper
+- **(startup)** reordering - (d3b8bda) - Felix Schlepper
+- **(themes)** enabled doom-themes - (96cab09) - Felix Schlepper
+- **(todos)** make colon optional - (b3eb194) - Felix Schlepper
+
+- - -
+
 ## v0.1.0 - 2023-05-15
 #### Bug Fixes
 - **(EOF)** untangle mess - (951a91c) - Felix Schlepper
