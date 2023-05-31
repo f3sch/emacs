@@ -10,6 +10,12 @@ A detailed description is [[elisp:(info "(emacs) Early Init File")][here]].
   ;; early-init.el -*- lexical-binding: t; -*-
 #+END_SRC
 
+** Variables
+#+BEGIN_SRC emacs-lisp :tangle early-init.el
+  (defvar ++cache-dir
+    (expand-file-name "emacs/" (or (getenv "XDG_CACHE_HOME") "~/.cache")))
+#+END_SRC
+
 ** Small Startup Optimizations
 This avoids garbage collection during startup. Afterward, sensible defaults are re-enabled.
 
@@ -32,19 +38,18 @@ Asynchronous compilation and speed, enabled.
 
 #+begin_src emacs-lisp :tangle early-init.el
   (setq comp-num-cpus (+ (/ (num-processors) 4) 1))
-  (let ((path (expand-file-name "eln-cache/" (expand-file-name "emacs/" (or (getenv "XDG_CACHE_HOME") "~/.cache")))))
+  (setq load-prefer-newer t)
+  (when (fboundp 'startup-redirect-eln-cache)
+    (startup-redirect-eln-cache
+     (convert-standard-filename
+      (expand-file-name  "eln-cache/" ++cache-dir))))
+  (let ((path (expand-file-name "eln-cache/" ++cache-dir)))
     (setq native-comp-eln-load-path (list path)
           native-compile-target-directory path))
   (setq native-comp-async-report-warnings-errors nil ;; Silence compiler warnings as they can be pretty disruptive
         native-compile-prune-cache t
         native-comp-speed 2
-        native-comp-deferred-compilation	 nil)  ;; Make native compilation happens asynchronously
-  (when (fboundp 'startup-redirect-eln-cache)
-    (startup-redirect-eln-cache
-     (convert-standard-filename
-      (expand-file-name  "eln-cache/" (expand-file-name "emacs/" (or (getenv "XDG_CACHE_HOME") "~/.cache"))))))
-
-  (setq load-prefer-newer t)
+        native-comp-deferred-compilation nil)  ;; Make native compilation happens asynchronously
 #+end_src
 
 ** Unstyled Emacs
@@ -139,6 +144,7 @@ A few useful variables to have.
   "State files contain long-lived local configuration data.")
 #+END_SRC
 
+
 ** Use-Package
 #+begin_src emacs-lisp
   (setq use-package-enable-imenu-support t
@@ -155,6 +161,7 @@ For the love of all that is holy, do not continue with untrusted connections.
 *** GNUTLS
 #+BEGIN_SRC emacs-lisp
   (use-package gnutls
+    ;; no type built-in, straight not yet available
     :custom
     (gnutls-verify-error t)
     (gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
@@ -166,6 +173,7 @@ For the love of all that is holy, do not continue with untrusted connections.
 *** NSM
 #+BEGIN_SRC emacs-lisp
   (use-package nsm
+    ;; no type built-in, straight not yet available
     :custom
     (network-security-level 'high))
 #+END_SRC
@@ -507,9 +515,12 @@ directory.
 
 #+BEGIN_SRC emacs-lisp
   (setq delete-old-versions t)
+  (setq kept-new-versions 6)
+  (setq kept-old-versions 2)
   ;; Backup also files under VC.
   (setq version-control t
         vc-make-backup-files t)
+  (setq backup-by-copying t)
   (setq backup-directory-alist
         `((,(concat "\\`" (file-name-as-directory temporary-file-directory)))
           ("\\`/tmp/" . nil)
@@ -683,8 +694,10 @@ When text is ellipsed, I want the ellipsis marker to be a single character of
 three dots. Let’s make it so:
 
 #+BEGIN_SRC emacs-lisp
-  (with-eval-after-load 'mule-util
-    (setq truncate-string-ellipsis "…"))
+  (use-package mule-util
+    :straight (:type built-in)
+    :custom
+    (truncate-string-ellipsis "…"))
 #+END_SRC
 
 This also applies to sexp expressions.
@@ -747,13 +760,14 @@ For better clipboard integration in Linux.
 
 #+BEGIN_SRC emacs-lisp
   (setq select-enable-clipboard t
-    select-enable-primary t
-    save-interprogram-paste-before-kill t)
+        select-enable-primary t
+        save-interprogram-paste-before-kill t)
 
-  (setq x-select-request-type     '(UTF8_STRING COMPOUND_TEXT TEXT STRING)
-        x-select-enable-clipboard t
-        x-select-enable-primary   t
-        x-stretch-cursor          t)
+  (if (eq (window-system) 'x)
+      (setq x-select-request-type     '(UTF8_STRING COMPOUND_TEXT TEXT STRING)
+            x-select-enable-clipboard t
+            x-select-enable-primary   t
+            x-stretch-cursor          t))
 #+END_SRC
 
 ** CJK Encoding
@@ -808,6 +822,7 @@ automatically re-centered.
 #+END_SRC
 
 Pixel wise precision when scrolling.
+
 #+BEGIN_SRC emacs-lisp
   (pixel-scroll-precision-mode)
 #+END_SRC
@@ -857,8 +872,8 @@ Disable Lockfiles.
 #+END_SRC
 
 ** Echo
-This is a built-in feature I didn't expect to be useful.  If you type part of
-keybinding, Emacs will display this part in the echo area after a timeout.  One
+This is a built-in feature I didn't expect to be useful. If you type part of
+keybinding, Emacs will display this part in the echo area after a timeout. One
 second is a bit too long though for my taste.
 
 #+BEGIN_SRC emacs-lisp
@@ -866,7 +881,7 @@ second is a bit too long though for my taste.
 #+END_SRC
 
 ** Display raw bytes as hex
-Title says it all.  \x rules \xDEADBEEF
+Title says it all. \x rules \xDEADBEEF
 
 #+BEGIN_SRC emacs-lisp
   (setq display-raw-bytes-as-hex t)
@@ -879,7 +894,8 @@ Sometimes there processes which do not want to die and then there is vterm.
   (setq confirm-kill-processes nil)
 #+END_SRC
 
-And finally, the prompt that asks you if you want to kill a buffer with a live process attached to it:
+And finally, the prompt that asks you if you want to kill a buffer with a live
+process attached to it:
 
 #+BEGIN_SRC emacs-lisp
   (setq kill-buffer-query-functions
@@ -905,7 +921,7 @@ CAsE is dump, ignore.
 
 #+BEGIN_SRC emacs-lisp
   (setq read-buffer-completion-ignore-case t
-    read-file-name-completion-ignore-case t)
+        read-file-name-completion-ignore-case t)
 #+END_SRC
 
 ** History
@@ -932,7 +948,8 @@ Persistent History, have some persistency.
 #+END_SRC
 
 ** Understand the more common ~sentence~
-By default, Emacs thinks a sentence is a full-stop followed by 2 spaces. Let’s make it full-stop and 1 space.
+By default, Emacs thinks a sentence is a full-stop followed by 2 spaces. Let’s
+make it full-stop and 1 space.
 
 #+BEGIN_SRC emacs-lisp
   (setq sentence-end-double-space nil)
@@ -1060,8 +1077,8 @@ Self-explanatory.
 #+END_SRC
 
 ** Path from shell
-On Linux Emacs doesn't use the shell PATH if it's not started from
-the shell. Let's fix that:
+On Linux (MacOS) Emacs doesn't use the shell PATH if it's not started from the shell.
+Let's fix that:
 
 #+BEGIN_SRC emacs-lisp
   (use-package exec-path-from-shell
@@ -1144,7 +1161,7 @@ Nice visual features.
 
     ;; The limit of the window width.
     ;; If `window-width' is smaller than the limit, some information won't be
-    ;; displayed. It can be an integer or a float number. `nil' means no limit."
+    ;; displayed. It can be an integer or a float number. `nil' means no limit.
     (doom-modeline-window-width-limit 85)
 
     ;; How to detect the project root.
@@ -1174,7 +1191,7 @@ Nice visual features.
     ;; If you are experiencing the laggy issue, especially while editing remote files
     ;; with tramp, please try `file-name' style.
     ;; Please refer to https://github.com/bbatsov/projectile/issues/657.
-    (doom-modeline-buffer-file-name-style 'auto)
+    (doom-modeline-buffer-file-name-style 'relative-to-project)
 
     ;; Whether display icons in the mode-line.
     ;; While using the server mode in GUI, should set the value explicitly.
@@ -1195,7 +1212,7 @@ Nice visual features.
     (doom-modeline-buffer-modification-icon t)
 
     ;; Whether display the time icon. It respects variable `doom-modeline-icon'.
-    (doom-modeline-time-icon t)
+    (doom-modeline-time-icon nil)
 
     ;; Whether to use unicode as a fallback (instead of ASCII) when not using icons.
     (doom-modeline-unicode-fallback nil)
@@ -1240,7 +1257,7 @@ Nice visual features.
     (doom-modeline-persp-name t)
 
     ;; If non nil the default perspective name is displayed in the mode-line.
-    (doom-modeline-display-default-persp-name nil)
+    (doom-modeline-display-default-persp-name t)
 
     ;; If non nil the perspective name is displayed alongside a folder icon.
     (doom-modeline-persp-icon t)
@@ -1294,28 +1311,13 @@ Nice visual features.
 
     ;; Whether display the environment version.
     (doom-modeline-env-version t)
-    ;; Or for individual languages
-    (doom-modeline-env-enable-python t)
-    (doom-modeline-env-enable-ruby nil)
-    (doom-modeline-env-enable-perl nil)
-    (doom-modeline-env-enable-go nil)
-    (doom-modeline-env-enable-elixir nil)
-    (doom-modeline-env-enable-rust t)
-
-    ;; Change the executables to use for the language version string
-    (doom-modeline-env-python-executable "python") ; or `python-shell-interpreter'
-    (doom-modeline-env-ruby-executable "ruby")
-    (doom-modeline-env-perl-executable "perl")
-    (doom-modeline-env-go-executable "go")
-    (doom-modeline-env-elixir-executable "iex")
-    (doom-modeline-env-rust-executable "rustc")
 
     ;; What to display as the version while a new one is being loaded
-    (doom-modeline-env-load-string "...")
+    (doom-modeline-env-load-string truncate-string-ellipsis)
 
     ;; By default, almost all segments are displayed only in the active window. To
     ;; display such segments in all windows, specify e.g.
-    (doom-modeline-always-visible-segments '(mu4e irc))
+    (doom-modeline-always-visible-segments '(mu4e))
 
     ;; Hooks that run before/after the modeline version string is updated
     (doom-modeline-before-update-env-hook nil)
@@ -1336,7 +1338,6 @@ Nice visual features.
 *** Doom
 #+BEGIN_SRC emacs-lisp
   (use-package doom-themes
-    :ensure t
     :config
     ;; Global settings (defaults)
     (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
@@ -1357,7 +1358,7 @@ Nice visual features.
 *** Modus
 #+BEGIN_SRC emacs-lisp
   (use-package modus-themes
-    :straight (:type built-in)
+    :straight (:host sourcehut :repo "protesilaos/modus-themes")
     :init (require-theme 'modus-themes)
     :config
     ;; In all of the following, WEIGHT is a symbol such as `semibold',
@@ -1450,13 +1451,17 @@ lines.
 
 ** Indentation
 Detect indentation automatically.
+
 #+BEGIN_SRC emacs-lisp
   (use-package dtrt-indent
+    :custom
+    (dtrt-indent-verbosity 0)
     :config
     (dtrt-indent-global-mode))
 #+END_SRC
 
 Minor mode to aggressively keep your code always indented
+
 #+BEGIN_SRC emacs-lisp
   (use-package aggressive-indent
     :hook (after-init . global-aggressive-indent-mode)
@@ -1524,6 +1529,7 @@ Minor mode to aggressively keep your code always indented
 ** Buffers
 *** Settings
 Now Emacs treats manual buffer switching the same as programmatic switching.
+
 #+BEGIN_SRC emacs-lisp
   (setq switch-to-buffer-obey-display-actions t
         switch-to-buffer-in-dedicated-window 'pop)
@@ -1651,8 +1657,7 @@ These settings do the following:
 #+END_SRC
 
 * Evil
-At some point I got used to =vim= keybindings.
-Now, I cannot go back.
+At some point I got used to =vim= keybindings. Now, I cannot go back.
 
 ** Base
 #+BEGIN_SRC emacs-lisp
@@ -1770,6 +1775,7 @@ Possibly the greatest package.
 
 ** Helpful
 Help me.
+
 #+BEGIN_SRC emacs-lisp
   (use-package help
     :straight (:type built-in)
@@ -1778,6 +1784,7 @@ Help me.
     (help-enable-variable-value-editing t))
 #+END_SRC
 
+Help me more.
 
 #+BEGIN_SRC emacs-lisp
   (use-package helpful
@@ -1939,6 +1946,7 @@ For minibuffer completions.
 *** Prescient Integration
 #+BEGIN_SRC emacs-lisp
   (use-package vertico-prescient
+    :after vertico
     :config
     (vertico-prescient-mode))
 #+END_SRC
@@ -1946,18 +1954,18 @@ For minibuffer completions.
 ** consult
 [[https://github.com/minad/consult][consult]] provides search and navigation commands based on the Emacs completion
 function [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Minibuffer-Completion.html][completing-read]]. Completion allows you to quickly select an item from a
-list of candidates. Consult offers asynchronous and interactive =consult-grep=
-and =consult-ripgrep= commands, and the line-based search command
-=consult-line=. Furthermore Consult provides an advanced buffer switching
-command =consult-buffer= to switch between buffers, recently opened files,
-bookmarks and buffer-like candidates from other sources. Some of the Consult
-commands are enhanced versions of built-in Emacs commands. For example the
-command =consult-imenu= presents a flat list of the Imenu with [[#live-previews][live preview]],
-[[#narrowing-and-grouping][grouping and narrowing]]. Please take a look at the [[#available-commands][full list of commands]].
+list of candidates. Consult offers asynchronous and interactive =consult-grep= and
+=consult-ripgrep= commands, and the line-based search command =consult-line=.
+Furthermore Consult provides an advanced buffer switching command =consult-buffer=
+to switch between buffers, recently opened files, bookmarks and buffer-like
+candidates from other sources. Some of the Consult commands are enhanced
+versions of built-in Emacs commands. For example the command =consult-imenu=
+presents a flat list of the Imenu with [[#live-previews][live preview]], [[#narrowing-and-grouping][grouping and narrowing]].
+Please take a look at the [[#available-commands][full list of commands]].
 
 Consult is fully compatible with completion systems centered around the standard
-Emacs =completing-read= API, notably the default completion system, [[https://github.com/minad/vertico][Vertico]],
-[[https://github.com/protesilaos/mct][Mct]], and [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Icomplete.html][Icomplete]].
+Emacs =completing-read= API, notably the default completion system, [[https://github.com/minad/vertico][Vertico]], [[https://github.com/protesilaos/mct][Mct]],
+and [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Icomplete.html][Icomplete]].
 
 This package keeps the completion system specifics to a minimum. The ability of
 the Consult commands to work well with arbitrary completion systems is one of
@@ -2108,9 +2116,9 @@ locations. The =default-directory= variable is not changed in the process.
   (use-package consult-dir
     :after consult
     :bind (("M-g d"   . consult-dir)
-       :map minibuffer-local-completion-map
-       ("M-s f" . consult-dir-jump-file)
-       ("M-g d" . consult-dir)))
+           :map minibuffer-local-completion-map
+           ("M-s f" . consult-dir-jump-file)
+           ("M-g d" . consult-dir)))
 #+end_src
 
 *** consult-git-log-grep
@@ -2139,8 +2147,8 @@ known projects, in case they want to change projects quickly.
 =consult-project-extra= provides an extension to the default Consult
 functionality, using the built-in package =project.el=, defining the functions
 =consult-project-extra-find= and =consult-project-extra-find-other-window=.
-Furthermore, =consult-project-extra= only depends on consult, resulting in a
-lean and simple to maintain functionality.
+Furthermore, =consult-project-extra= only depends on consult, resulting in a lean
+and simple to maintain functionality.
 
 #+BEGIN_SRC emacs-lisp
   (use-package consult-project-extra
@@ -2155,20 +2163,6 @@ lean and simple to maintain functionality.
     :straight (consult-flyspell :type git :host gitlab :repo "OlMon/consult-flyspell" :branch "master")
     :custom
     (consult-flyspell-select-function 'flyspell-correct-at-point))
-#+END_SRC
-
-
-*** kind-icon
-#+BEGIN_SRC emacs-lisp
-(use-package kind-icon
-  :after corfu
-  :custom
-  (kind-icon-default-face 'corfu-default)
-  (kind-icon-use-icons t)
-  (kind-icon-blend-background nil)
-  (kind-icon-blend-frac 0.08)
-  :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 #+END_SRC
 
 *** embark-consult
@@ -2201,6 +2195,7 @@ provides an alternative overlay-based display.
 
 #+begin_src emacs-lisp
   (use-package corfu
+    :demand t
     :straight (corfu :type git :host github :repo "minad/corfu"
                      :files (:defaults "extensions/*")
                      :includes (corfu-history
@@ -2239,7 +2234,7 @@ provides an alternative overlay-based display.
     ;; configuration already has pre-prepared). Necessary for manual corfu usage with
     ;; orderless, otherwise first component is ignored, unless `corfu-separator'
     ;; is inserted.
-    (corfu-quit-at-boundary nil)
+    (corfu-quit-at-boundary 'separator)
     (corfu-separator ?\s)            ; Use space
     (corfu-quit-no-match 'separator) ; Don't quit if there is `corfu-separator' inserted
     (corfu-preview-current 'insert)  ; Preview first candidate. Insert on input if only one
@@ -2285,36 +2280,49 @@ provides an alternative overlay-based display.
 *** Prescient Integration
 #+BEGIN_SRC emacs-lisp
   (use-package corfu-prescient
+    :after (prescient corfu)
     :config
     (corfu-prescient-mode))
 #+END_SRC
 
-*** corfu-popupinfo
+*** kind-icon
+#+BEGIN_SRC emacs-lisp
+  (use-package kind-icon
+    :after corfu
+    :custom
+    (kind-icon-default-face 'corfu-default)
+    (kind-icon-use-icons t)
+    (kind-icon-blend-background nil)
+    (kind-icon-blend-frac 0.08)
+    :config
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+#+END_SRC
 
+
+*** corfu-popupinfo
 #+begin_src emacs-lisp
-(use-package corfu-popupinfo
-  :after corfu
-  :hook (corfu-mode . corfu-popupinfo-mode)
-  :bind (:map corfu-map
-              ("M-n" . corfu-popupinfo-scroll-up)
-              ("M-p" . corfu-popupinfo-scroll-down)
-              ([remap corfu-show-documentation] . corfu-popupinfo-toggle))
-  :custom
-  (corfu-popupinfo-delay 0.5)
-  (corfu-popupinfo-max-width 70)
-  (corfu-popupinfo-max-height 20)
-  ;; Also here to be extra-safe that this is set when `corfu-popupinfo' is
-  ;; loaded. I do not want documentation shown in both the echo area and in
-  ;; the `corfu-popupinfo' popup.
-  (corfu-echo-documentation nil))
+  (use-package corfu-popupinfo
+    :after corfu
+    :hook (corfu-mode . corfu-popupinfo-mode)
+    :bind (:map corfu-map
+                ("M-n" . corfu-popupinfo-scroll-up)
+                ("M-p" . corfu-popupinfo-scroll-down)
+                ([remap corfu-show-documentation] . corfu-popupinfo-toggle))
+    :custom
+    (corfu-popupinfo-delay 0.5)
+    (corfu-popupinfo-max-width 70)
+    (corfu-popupinfo-max-height 20)
+    ;; Also here to be extra-safe that this is set when `corfu-popupinfo' is
+    ;; loaded. I do not want documentation shown in both the echo area and in
+    ;; the `corfu-popupinfo' popup.
+    (corfu-echo-documentation nil))
 #+end_src
 
 ** Cape
 [[https://github.com/minad/cape][cape]] provides Completion At Point Extensions which can be used in combination
 with the [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. The completion
-backends used by =completion-at-point= are so called
-=completion-at-point-functions= (Capfs). In principle, the Capfs provided by
-Cape can also be used by [[https://github.com/company-mode/company-mode][Company]].
+backends used by =completion-at-point= are so called =completion-at-point-functions=
+(Capfs). In principle, the Capfs provided by Cape can also be used by [[https://github.com/company-mode/company-mode][Company]].
 
 Cape has the super power to transform Company backends into Capfs and merge
 multiple Capfs into a Super-Capf! These transformers allow you to still take
@@ -2322,7 +2330,6 @@ advantage of Company backends even if you are not using Company as frontend.
 
 #+begin_src emacs-lisp
 (use-package cape
-  :demand t
   :bind (("C-c . p" . completion-at-point)
          ("C-c . t" . complete-tag)
          ("C-c . d" . cape-dabbrev)
@@ -2661,7 +2668,6 @@ Hence Something visually appealing.
 
 #+BEGIN_SRC emacs-lisp
   (use-package undo-tree
-    :defer t
     :init
     (progn
       (setq undo-tree-visualizer-timestamps t
@@ -2717,26 +2723,100 @@ Hence Something visually appealing.
 #+BEGIN_SRC emacs-lisp
   (use-package org
     :straight (:type built-in)
-    :config
-    (setq
-     ;; Edit settings
-     org-auto-align-tags nil
-     org-tags-column 0
-     org-catch-invisible-edits 'show-and-error
-     org-special-ctrl-a/e t
-     org-insert-heading-respect-content t
+    :custom
+    ;; Agenda
+    (org-agenda-time-grid '((daily today require-timed) "----------------------" nil))
+    (org-agenda-skip-scheduled-if-done t)
+    (org-agenda-skip-deadline-if-done t)
+    (org-agenda-include-deadlines t)
+    (org-agenda-include-diary t)
+    (org-agenda-block-separator nil)
+    (org-agenda-compact-blocks t)
+    (org-agenda-start-with-log-mode t)
 
-     ;; Org styling, hide markup etc.
-     org-hide-emphasis-markers t
-     org-pretty-entities t
-     org-ellipsis "…"))
+    ;; Edit settings
+    (org-auto-align-tags nil)
+    (org-tags-column 0)
+    (org-catch-invisible-edits 'show-and-error)
+    (org-special-ctrl-a/e t)
+    (org-insert-heading-respect-content t)
+
+    ;; Org styling, hide markup etc.
+    (org-hide-emphasis-markers t)
+    (org-pretty-entities t)
+    (org-ellipsis "…"))
 #+END_SRC
 
 ** Modern Look
 #+BEGIN_SRC emacs-lisp
   (use-package org-modern
+    :after org
     :config
     (global-org-modern-mode))
+#+END_SRC
+** Agenda
+*** Super Agenda
+#+BEGIN_SRC emacs-lisp
+  (use-package org-super-agenda
+    :defer t
+    :after org
+    :custom
+    (org-agenda-custom-commands '(("z" "Super zaen view"
+                                   ((agenda "" ((org-agenda-span 'day)
+                                                (org-super-agenda-groups
+                                                 '((:name "Today"
+                                                          :time-grid t
+                                                          :date today
+                                                          :todo "TODAY"
+                                                          :scheduled today
+                                                          :order 1)))))
+                                    (alltodo "" ((org-agenda-overriding-header "")
+                                                 (org-super-agenda-groups
+                                                  '((:name "Next to do"
+                                                           :todo "NEXT"
+                                                           :order 1)
+                                                    (:name "Important"
+                                                           :tag "Important"
+                                                           :priority "A"
+                                                           :order 6)
+                                                    (:name "Due Today"
+                                                           :deadline today
+                                                           :order 2)
+                                                    (:name "Due Soon"
+                                                           :deadline future
+                                                           :order 8)
+                                                    (:name "Overdue"
+                                                           :deadline past
+                                                           :order 7)
+                                                    (:name "Assignments"
+                                                           :tag "Assignment"
+                                                           :order 10)
+                                                    (:name "Issues"
+                                                           :tag "Issue"
+                                                           :order 12)
+                                                    (:name "Projects"
+                                                           :tag "Project"
+                                                           :order 14)
+                                                    (:name "Emacs"
+                                                           :tag "Emacs"
+                                                           :order 13)
+                                                    (:name "Research"
+                                                           :tag "Research"
+                                                           :order 15)
+                                                    (:name "To read"
+                                                           :tag "Read"
+                                                           :order 30)
+                                                    (:name "Waiting"
+                                                           :todo "WAITING"
+                                                           :order 20)
+                                                    (:name "trivial"
+                                                           :priority<= "C"
+                                                           :tag ("Trivial" "Unimportant")
+                                                           :todo ("SOMEDAY" )
+                                                           :order 90)
+                                                    (:discard (:tag ("Chore" "Routine" "Daily")))))))))))
+    :config
+    (org-super-agenda-mode))
 #+END_SRC
 
 ** Shortcuts
@@ -2950,10 +3030,12 @@ Giving parenthesis some brains.
     :general
     (+local-leader-key
       :keymaps 'emacs-lisp-mode-map
-      "eM" 'pp-macroexpand-expression
-      "em" 'pp-macroexpand-last-sexp
-      "ex" 'pp-eval-last-sexp
-      "eX" 'pp-eval-expression))
+      "e" '(:ignore t :wk "Evaluate Code")
+      "eM" '(pp-macroexpand-expression :wk "Macroexpand Expression")
+      "em" '(pp-macroexpand-last-sexp :wk "Macroexpand Last SEXP")
+      "eb" '(pp-buffer :wk "Eval Buffer")
+      "ex" '(pp-eval-last-sexp :wk "Eval Last SEXP")
+      "eX" '(pp-eval-expression :wk "Eval Expression")))
 #+END_SRC
 
 **** Parinfer
@@ -2987,14 +3069,14 @@ common conventions.
 #+END_SRC
 
 **** makem.sh
-#+BEGIN_SRCemacs-lisp
+#+BEGIN_SRC emacs-lisp
   (use-package makem
-    :straight (:type git :host github :repo "alphapapa/makem.sh"
-                     :files (:defaults "makem.sh"))
-    :commands makem
+    :disabled t
+    :straight (:type git :host github :repo "alphapapa/makem.sh")
     :general
     (+local-leader-key
-      "m" '(makem :wk "Makem")))
+      :keymaps 'emacs-lisp-mode-map
+      "M" '(makem :wk "Makem")))
 #+END_SRC
 
 **** Transient Showcase
@@ -3037,6 +3119,7 @@ common conventions.
     :straight (:host github :repo "Lindydancer/cmake-font-lock" :files (:defaults "*"))
     :hook (cmake-mode . cmake-font-lock-activate))
 
+  ;; Modern version
   (use-package cmake-ts-mode
     :mode (rx (or (and "CMakeLists.txt" eol) ".cmake")))
 #+END_SRC
@@ -3074,6 +3157,53 @@ common conventions.
   ;; Pixel alignment for org/markdown tables
   (use-package valign
     :hook ((markdown-mode org-mode) . valign-mode))
+#+END_SRC
+
+*** Rust
+#+BEGIN_SRC emacs-lisp
+  (use-package rustic
+    :custom
+    (rustic-lsp-client 'eglot)
+    (rustic-spinner-type 'progress-bar)
+    (rustic-indent-method-chain t)
+    (rustic-enable-detached-file-support t)
+    (rustic-lsp-server 'rust-analyzer)
+    ;; leave this to apheleia
+    (rustic-format-trigger nil)
+    (rustic-format-on-save nil)
+    :general
+    (+local-leader-key
+      :keymaps 'rustic-mode-map
+      "b" '(:ignore t :wk "Build")
+      "bb" '(rustic-cargo-build :wk "Cargo Build")
+      "bB" '(rustic-cargo-bench :wk "Cargo Bench")
+      "bc" '(rustic-cargo-check :wk "Cargo Check")
+      "bC" '(rustic-cargo-clippy :wk "Cargo Clippy")
+      "bd" '(rustic-cargo-build-doc :wk "Cargo build Docs")
+      "bD" '(rustic-cargo-doc :wk "Cargo open Docs")
+      "bf" '(rustic-cargo-fmt :wk "Cargo Format Workspace")
+      "bs" '(rustic-cargo-spellcheck :wk "Cargo Spellcheck")
+      "bn" '(rustic-cargo-new :wk "Cargo New")
+      "bi" '(rustic-cargo-init :wk "Cargo Init")
+      "bo" '(rustic-cargo-outdated :wk "Cargo Outdated")
+      "br" '(rustic-cargo-run :wk "Cargo Run")
+
+      "e" '(:ignore t :wk "Edit Cargo.toml")
+      "ea" '(rustic-cargo-add :wk "Add Crate")
+      "er" '(rustic-cargo-rm :wk "Remove Crate")
+      "eb" '(rustic-cargo-add-missing-dependencies :wk "Add missing Dependencies")
+
+      "E" '(rustic-cargo-epand :wk "Expand Macro")
+
+      "t" '(:ignore t :wk "Test")
+      "ta" '(rustic-cargo-test :wk "Run All")
+      "tt" '(rustic-cargo-current-test :wk "Run Current")))
+#+END_SRC
+
+*** Protobuf
+#+BEGIN_SRC emacs-lisp
+  (use-package protobuf-mode
+    :mode (("\\.proto\\'" . protobuf-mode)))
 #+END_SRC
 
 *** XML
@@ -3782,7 +3912,6 @@ Cross-referencing.
 ** Compile
 #+BEGIN_SRC emacs-lisp
   (use-package compile
-    :defer t
     :straight (:type built-in)
     :hook (
            (compilation-filter . colorize-compilation-buffer)
@@ -3844,10 +3973,32 @@ execute one.
           compile-multi-config)
 
     ;; Makefile
+    (defun +makefile-get-targets ()
+      (let ((default-directory (file-name-directory
+                                (expand-file-name "Makefile")))
+            target targets)
+        (with-temp-buffer
+          (insert
+           (shell-command-to-string
+            (format "make -f %s -nqp __BASH_MAKE_COMPLETION__=1 .DEFAULT 2>/dev/null" makefile)))
+          (goto-char (point-min))
+          (unless (re-search-forward "^# Files" nil t)
+            (error "Could not parse database!"))
+          (while (re-search-forward "^\\([^%$:#\n\t ]+\\):\\([^=]\\|$\\)" nil t)
+            (setq target (match-string 1))
+            (unless (or (save-excursion
+                          (goto-char (match-beginning 0))
+                          (forward-line -1)
+                          (looking-at "^# Not a target:"))
+                        (string-match "^\\([/a-zA-Z0-9_. -]+/\\)?\\." target))
+              (push (cons (format "make:%s" target) (format "make %s" target))
+                    targets))))
+        targets))
+
     (push '((file-exists-p "Makefile")
-            ("make:build" . "make build")
-            ("make:test" . "make test")
-            ("make:all" . "make all"))
+            ("some-1" . "some-1")
+            ,#'+makefile-get-targets
+            ("some-3" . "some-3"))
           compile-multi-config))
 #+END_SRC
 
@@ -3881,7 +4032,17 @@ execute one.
     :config
     ;; This is needed for tramp to respect remote PATH variable
     (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-    (add-to-list 'tramp-backup-directory-alist  (cons tramp-file-name-regexp nil)))
+    (add-to-list 'tramp-backup-directory-alist  (cons tramp-file-name-regexp nil))
+
+
+    ;;; Profiles
+    ;; Do not use authinfo
+    (connection-local-set-profile-variables 'remote-without-auth-sources
+                                            '((auth-sources . nil)))
+
+    ;; set profiles
+    (connection-local-set-profiles
+     '(:application tramp) 'remote-without-auth-sources))
 #+END_SRC
 
 ** Spelling
@@ -3965,6 +4126,7 @@ Correct misspelled words using vertico
     (flymake-start-on-flymake-mode t)
     (flymake-no-changes-timeout nil)
     (flymake-start-on-save-buffer t)
+    (flymake-show-diagnostics-at-end-of-line t)
     (flymake-proc-compilation-prevents-syntax-check t)
     (flymake-wrap-around nil)
     (flymake-mode-line-format
@@ -4050,16 +4212,23 @@ Keyfreq is a package that records all the commands I call from Emacs and builds
 a heatmap out of it.
 
 #+begin_src emacs-lisp
-(use-package keyfreq
-  :init
-  (keyfreq-mode 1)
-  (keyfreq-autosave-mode 1)
-  :config
-  (setq keyfreq-excluded-commands '(self-insert-command org-self-insert-command
-                                    evil-previous-visual-line evil-next-visual-line
-                                    ivy-next-line evil-backward-char evil-forward-char
-                                    evil-next-line evil-previous-line evil-normal-state
-                                    text-scale-pinch)))
+  (use-package keyfreq
+    :init
+    (keyfreq-mode 1)
+    (keyfreq-autosave-mode 1)
+    :config
+    (setq keyfreq-excluded-commands '(self-insert-command
+                                      org-self-insert-command
+                                      pixel-scroll-precision
+                                      evil-previous-visual-line
+                                      evil-next-visual-line
+                                      ivy-next-line
+                                      evil-backward-char
+                                      evil-forward-char
+                                      evil-next-line
+                                      evil-previous-line
+                                      evil-normal-state
+                                      text-scale-pinch)))
 #+end_src
 
 ** Info Colours
@@ -4081,6 +4250,32 @@ Unbelievably, but true.
 
 ** Gnus
 #+BEGIN_SRC emacs-lisp
+  (use-package gnus
+    :straight (:type built-in)
+    :commands gnus
+    :config
+    (progn
+      (setq
+       gnus-select-method '(nnnil "")
+       gnus-secondary-select-methods '((nntp "gmane" (nntp-address "news.gmane.io"))
+                                       (nntp "nntp.lore.kernel.org"))
+       gnus-view-pseudo-asynchronously t
+       gnus-activate-level 3
+       ;; Scoring
+       gnus-use-adaptive-scoring t
+       gnus-decay-scores t
+
+       ;; Thread behaviour
+       gnus-build-sparse-threads 'some
+       gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
+       gnus-thread-hide-subtree t
+
+       ;; Thread sorting (primary function is the last)
+       gnus-thread-sort-functions '(gnus-thread-sort-by-total-score
+                                    gnus-thread-sort-by-number
+                                    gnus-thread-sort-by-most-recent-date)
+       gnus-read-active-file nil)))
+
   (use-package gnus-art
     :after gnus
     :straight (:type built-in)
@@ -4114,33 +4309,6 @@ Unbelievably, but true.
      gnus-sum-thread-tree-leaf-with-other "├► "
      gnus-sum-thread-tree-single-leaf "╰► "
      gnus-sum-thread-tree-vertical "│"))
-
-  (use-package gnus
-    :straight (:type built-in)
-    :commands gnus
-    :config
-    (progn
-      (setq
-       gnus-select-method '(nnnil "")
-       gnus-secondary-select-methods '((nntp "gmane" (nntp-address "news.gmane.io"))
-                                       (nntp "nntp.lore.kernel.org"))
-       gnus-view-pseudo-asynchronously t
-       gnus-activate-level 3
-       ;; Scoring
-       gnus-use-adaptive-scoring t
-       gnus-decay-scores t
-
-       ;; Thread behaviour
-       gnus-build-sparse-threads 'some
-       gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
-       gnus-thread-hide-subtree t
-
-       ;; Thread sorting (primary function is the last)
-       gnus-thread-sort-functions
-       '(gnus-thread-sort-by-total-score
-         gnus-thread-sort-by-number
-         gnus-thread-sort-by-most-recent-date)
-       gnus-read-active-file nil)))
 #+END_SRC
 
 ** Goto Addresses
@@ -4149,6 +4317,22 @@ Unbelievably, but true.
     :straight (:type built-in)
     :config
     (global-goto-address-mode))
+#+END_SRC
+
+** VTerm
+#+BEGIN_SRC emacs-lisp
+  (use-package vterm
+    :if (executable-find "cmake")
+    :commands vterm
+    :init
+    (setq vterm-always-compile-module t)
+    :custom
+    ;; vterm buffers are killed when the associated process is terminated
+    (vterm-kill-buffer-on-exit t))
+
+  (use-package vterm-toggle
+    :if (executable-find "cmake")
+    :after vterm)
 #+END_SRC
 
 * Security
@@ -4205,6 +4389,7 @@ Unbelievably, but true.
 * Fun
 ** Screenshots
 Use the built-in support via cairo.
+
 #+BEGIN_SRC emacs-lisp
   (defun self-screenshot (&optional type)
     "Save a screenshot of type TYPE of the current Emacs frame.
@@ -4230,8 +4415,8 @@ Use the built-in support via cairo.
       (message filename)))
 #+END_SRC
 
-=screenshot.el= is a nice utility package made by TEC. It allows the user to
-take a screenshot of a specific area of a buffer and make it look nice.
+=screenshot.el= is a nice utility package made by TEC. It allows the user to take
+a screenshot of a specific area of a buffer and make it look nice.
 
 #+BEGIN_SRC emacs-lisp
   (use-package screenshot
@@ -4371,10 +4556,19 @@ take a screenshot of a specific area of a buffer and make it look nice.
     :infix "o"
     "" '(:ignore t :wk "Open")
     "m" '(mu4e :wk "Mail")
+    "t" '(vterm-toggle :wk "Terminal toggle")
     "T" '(consult-theme :wk "Pick Theme")
     "f" '(+open-config :wk "Edit Config")
     "-" '(dirvish :wk "Dired")
     "s" '(dirvish-side :wk "Sidebar"))
+#+END_SRC
+
+*** Org
+#+BEGIN_SRC emacs-lisp
+  (+leader-key
+    :infix "a"
+    "" '(:ignore t :wk "Org")
+    "a" '(org-agenda :wk "Agenda"))
 #+END_SRC
 
 *** Toggle
@@ -4466,7 +4660,7 @@ take a screenshot of a specific area of a buffer and make it look nice.
     "." '(consult-line :wk "Search File")
     "X" '(persp-switch-to-scratch-buffer :wk "Scratch Buffer")
     "x" '(org-capture :wk "Capture")
-    "SPC" '(consult-find :wk "Find File")
+    "SPC" '(project-find-file :wk "Find File")
 
     "-" '(:ignore t :wk "Emacs Profiler")
     "-s" '(profiler-start :wk "Profiler Start")
@@ -4495,8 +4689,8 @@ A simple function that tangles this file.
 #+END_SRC
 
 ** Add-hook
-Emacs considers some file local variables unsafe, e.g., =after-save-hook=.
-Hence, I add it as a safe pair, with =+tangle-config= function, to the
+Emacs considers some file local variables unsafe, e.g., =after-save-hook=. Hence,
+I add it as a safe pair, with =+tangle-config= function, to the
 =safe-local-variable-values= variable.
 
 #+BEGIN_SRC emacs-lisp

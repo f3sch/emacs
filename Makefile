@@ -15,8 +15,6 @@ all: init.el
 init.el: init.org clean-init
 	@$(EMACS_BATCH) \
 		--eval "(let ((debug-on-error t) (user-emacs-directory default-directory)) (org-babel-load-file \"init.org\"))"
-	@chmod ugo-w $@
-
 
 clean:
 	$(RM) *~
