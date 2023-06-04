@@ -1359,7 +1359,6 @@ Nice visual features.
 #+BEGIN_SRC emacs-lisp
   (use-package modus-themes
     :straight (:host sourcehut :repo "protesilaos/modus-themes")
-    :init (require-theme 'modus-themes)
     :config
     ;; In all of the following, WEIGHT is a symbol such as `semibold',
     ;; `light', `bold', or anything mentioned in `modus-themes-weights'.
@@ -1400,7 +1399,7 @@ Nice visual features.
             (t . (1.1))))
 
     ;;; Load Theme and set Toggle
-    (load-theme 'modus-operandi)
+    (load-theme 'modus-operandi :no-confirm)
     (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
 #+END_SRC
 
@@ -2855,7 +2854,16 @@ Hence Something visually appealing.
 #+BEGIN_SRC emacs-lisp
   (use-package eglot
     :straight (:type built-in)
-    :hook ((prog-mode . eglot-ensure)
+    :hook (((c-mode
+             c-ts-mode
+             c++-mode
+             c++-ts-mode
+             cmake-mode
+             cmake-ts-mode
+             rust-mode
+             rust-ts-mode
+             shell-mode
+             shell-ts-mode) . eglot-ensure)
            (eglot-managed-mode . eglot-inlay-hints-mode))
     :custom
     (eglot-autoshutdown t)
@@ -2878,11 +2886,10 @@ Hence Something visually appealing.
                       "--completion-style=detailed"
                       "--completion-parse=auto"
                       "--all-scopes-completion"
-                      "--cross-file-rename"
                       "--log=error"
                       "--malloc-trim"
                       "--background-index"
-                      "--background-index-priority=low"
+                      ;; "--background-index-priority=low"
                       "--pch-storage=memory"
                       "--clang-tidy"))))
 #+END_SRC
@@ -2894,17 +2901,20 @@ The future.
   (use-package treesit
     :straight (:type built-in)
     :custom
-    (treesit-font-lock-level 4))
-
-  (use-package treesit-auto
-    :straight (:host github :repo "renzmann/treesit-auto")
-    :hook (after-init . global-treesit-auto-mode)
-    :commands treesit-auto-install-all
-    :custom
-    (treesit-auto-install t)
+    (treesit-font-lock-level 4)
     :config
-    (setq treesit-language-source-alist (treesit-auto--build-treesit-source-alist))
-    (+register-build-function #'treesit-auto-install-all))
+    (setq major-mode-remap-alist '((yaml-mode . yaml-ts-mode)
+                                   (cmake-mode . cmake-ts-mode)
+                                   (c++-mode . c++-ts-mode)
+                                   (c-mode . c-ts-mode)
+                                   (json-mode . json-ts-mode)
+                                   (toml-mode . toml-ts-mode)
+                                   (yaml-mode . yaml-ts-mode)
+                                   (python-mode . python-ts-mode)
+                                   (rust-mode . rust-ts-mode)
+                                   (markdown-mode . markdown-ts-mode)
+                                   (makefile-mode . makefile-ts-mode)
+                                   (bash-mode . bash-ts-mode))))
 #+END_SRC
 
 ** Formatting
@@ -3257,7 +3267,7 @@ common conventions.
   (use-package mu4e
     :commands mu4e mu4e-compose-new
     :init
-    (let ((mu4e-path "/usr/local/share/emacs/site-lisp/mu/mu4e"))
+    (let ((mu4e-path "/usr/local/share/emacs/site-lisp/mu4e"))
       (when (file-directory-p mu4e-path)
         (add-to-list 'load-path mu4e-path)))
     :config
@@ -3806,6 +3816,13 @@ are cached for speed.
   (use-package disk-usage)
 #+END_SRC
 
+** DevDocs
+#+BEGIN_SRC emacs-lisp
+  (use-package devdocs
+    :custom
+    (devdocs-data-dir (expand-file-name "devdocs" +data-dir)))
+#+END_SRC
+
 ** PDF
 =pdf-tools= enables PDF support for Emacs, much better than its built-in support
 with DocView. Aside from the classical settings such as keybinds, I also enable
@@ -4187,7 +4204,9 @@ Correct misspelled words using vertico
     :hook (flymake-mode-hook . flymake-diagnostic-at-point-mode))
 
   (use-package flymake-collection
-  :hook (after-init . flymake-collection-hook-setup))
+    :hook (after-init . flymake-collection-hook-setup)
+    :custom
+    (flymake-collection-hook-ignore-modes '(eglot--managed-mode)))
 #+END_SRC
 
 ** Keycast
@@ -4521,6 +4540,8 @@ a screenshot of a specific area of a buffer and make it look nice.
     :infix "h"
     "" '(:ignore t :wk "Help")
     "h" '(helpful-at-point :wk "At Point")
+    "d" '(devdocs-lookup :wk "Search Documentation")
+    "D" '(devdocs-install :wk "Dowload Documentation")
     "c" '(helpful-callable :wk "Callable")
     "C" '(helpful-command :wk "Command")
     "s" '(helpful-symbol :wk "Symbol")
