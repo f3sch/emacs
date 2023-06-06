@@ -1492,6 +1492,14 @@ Minor mode to aggressively keep your code always indented
                                            (thing-at-point 'line))))))
 #+END_SRC
 
+** SQLite
+#+BEGIN_SRC emacs-lisp
+  (use-package emacsql-sqlite-builtin
+    :if (+emacs-features-p 'sqlite3)
+    :straight t
+    :demand t)
+#+END_SRC
+
 * Windows/Buffers
 ** Windows
 *** Winner
@@ -2299,6 +2307,7 @@ provides an alternative overlay-based display.
 *** kind-icon
 #+BEGIN_SRC emacs-lisp
   (use-package kind-icon
+    :if (+emacs-features-p 'rsvg)
     :after corfu
     :custom
     (kind-icon-default-face 'corfu-default)
@@ -2507,7 +2516,8 @@ them, and fork projects among other things.
     (setq forge-add-default-bindings nil)
     (evil-collection-forge-setup)
     :custom
-    (forge-database-file (concat +state-dir "forge/forge-database.sqlite"))
+    (forge-database-connector (if (+emacs-features-p 'sqlite3) 'sqlite-builtin 'sqlite))
+    (forge-database-file (concat +state-dir "forge/database.sqlite"))
     (forge-owned-accounts '(("f3sch") . nil))
     :general
     (+local-leader-key
@@ -2545,11 +2555,12 @@ them, and fork projects among other things.
 *** Code Review
 #+BEGIN_SRC emacs-lisp
   (use-package code-review
+    :disabled t
     :straight (code-review :host github :repo "phelrine/code-review"
                      :branch "fix/closql-update")
     :after (magit forge)
     :custom
-    (code-review-db-database-file (concat +data-dir "code-review/code-review-db-file.sqlite"))
+    (code-review-db-database-file (concat +data-dir "code-review/database.sqlite"))
     (code-review-log-file (concat +data-dir "code-review/code-review-error.log"))
     (code-review-download-dir (concat +data-dir "code-review/"))
     (code-review-auth-login-marker 'forge)
