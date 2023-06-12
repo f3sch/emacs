@@ -2443,7 +2443,9 @@ Possibly the most convincing reason to use EMACS? No, seriously it is awesome!
     ;; Show granular hunks
     (magit-diff-refine-hunk 'all)
     (magit-diff-refine-ignore-whitespace t)
-    (magit-diff-paint-whitespace-lines t))
+    (magit-diff-paint-whitespace-lines t)
+    :config
+    (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-tracked-files nil 'append))
 #+END_SRC
 
 *** Transient
