@@ -2895,6 +2895,7 @@ Hence Something visually appealing.
     (eglot-extend-to-xref t)
     (eglot-connect-timeout 10)
     (eglot-send-changes-idle-time 0.5)
+    (eglot-events-buffer-size 0)
     :config
     (add-to-list 'eglot-stay-out-of 'eldoc-documentation-strategy)
 
