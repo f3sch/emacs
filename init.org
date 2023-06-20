@@ -4449,6 +4449,25 @@ Unbelievably, but true.
     :after vterm)
 #+END_SRC
 
+** WithEditor
+This library makes it possible to reliably use the Emacsclient as the =$EDITOR= of
+child processes. It makes sure that they know how to call home. For remote
+processes a substitute is provided, which communicates with Emacs on standard
+output/input instead of using a socket as the Emacsclient does.
+
+It provides the commands with-editor-async-shell-command and
+with-editor-shell-command, which are intended as replacements for
+async-shell-command and shell-command. They automatically export $EDITOR making
+sure the executed command uses the current Emacs instance as “the editor”. With
+a prefix argument these commands prompt for an alternative environment variable
+such as =$GIT_EDITOR=. To always use these variants add this to your init file:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package with-editor
+    :hook
+    ((shell-mode eshell-mode vterm-mode) . with-editor-export-editor))
+#+END_SRC
+
 * Security
 ** EPG
 #+BEGIN_SRC emacs-lisp
