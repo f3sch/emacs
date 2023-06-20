@@ -2400,6 +2400,20 @@ The built in project management library.
     (project-vc-extra-root-markers '(".projectile.el" ".project.el" ".project")))
 #+END_SRC
 
+*** Buffer Relative Name
+A minimal minor-mode that sets project relative paths for buffer names with
+optional path abbreviation.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package buffer-name-relative
+    :custom
+    (buffer-name-relative-fallback 'absolute)
+    (buffer-name-relative-abbrev-limit 80)
+    :config
+    (buffer-name-relative-mode))
+#+END_SRC
+
+
 * VC
 ** Basics
 Follow symlinks
