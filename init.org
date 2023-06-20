@@ -307,10 +307,10 @@ Some functionality uses this to identify you, e.g. GPG configuration, email
 clients, file templates and snippets.
 
 #+BEGIN_SRC emacs-lisp
-(setq user-full-name "Felix Schlepper"
-      user-mail-address "f3sch.git@outlook.com"
-      user-login-name "f3sch"
-      user-real-login-name "f3sch")
+  (setq user-full-name "Felix Schlepper"
+        user-mail-address "f3sch.git@outlook.com"
+        user-login-name "f3sch"
+        user-real-login-name "f3sch")
 #+END_SRC
 
 ** Library Functions
@@ -554,7 +554,7 @@ I do not need to know when it does...
 
 #+BEGIN_SRC emacs-lisp
   (use-package recentf
-    :straight (:type built-in)
+    :straight (recentf :type built-in)
     :hook (after-init . recentf-mode)
     :custom
     (recentf-max-saved-items 300)
@@ -618,7 +618,7 @@ Saves the last position of pointer in a file.
 
 #+BEGIN_SRC emacs-lisp
   (use-package saveplace
-    :straight (:type built-in)
+    :straight (saveplace :type built-in)
     :hook (after-init . save-place-mode)
     :custom
     (save-place-file (concat +cache-dir "saveplace"))
@@ -631,7 +631,7 @@ Embrace the daemon.
 #+BEGIN_SRC emacs-lisp
   (use-package server
     :when (display-graphic-p)
-    :straight (:type built-in)
+    :straight (server :type built-in)
     :defer 10
     :config
     (when-let (name (getenv "EMACS_SERVER_NAME"))
@@ -644,7 +644,7 @@ Embrace the daemon.
 #+BEGIN_SRC emacs-lisp
   (use-package autorevert
     ;; revert buffers when their files/state have changed
-    :straight (:type built-in)
+    :straight (autorevert :type built-in)
     :hook (after-init . global-auto-revert-mode)
     :config
     (setq auto-revert-verbose t ; let us know when it happens
@@ -947,7 +947,7 @@ Persistent History, have some persistency.
 
 #+BEGIN_SRC emacs-lisp
   (use-package savehist
-    :straight (:type built-in)
+    :straight (savehist :type built-in)
     :hook (after-init . savehist-mode)
     :custom
     (savehist-file (concat +cache-dir "savehist"))
@@ -1065,7 +1065,7 @@ Clean up trailing whitespaces automatically.
 
 #+BEGIN_SRC emacs-lisp
   (use-package whitespace
-    :straight (:type built-in)
+    :straight (whitespace :type built-in)
     ;; clean up by default
     :hook (before-save . whitespace-cleanup)
     :custom
@@ -1370,7 +1370,7 @@ Nice visual features.
 *** Modus
 #+BEGIN_SRC emacs-lisp
   (use-package modus-themes
-    :straight (:host sourcehut :repo "protesilaos/modus-themes")
+    :straight (modus-themes :host sourcehut :repo "protesilaos/modus-themes")
     :config
     ;; In all of the following, WEIGHT is a symbol such as `semibold',
     ;; `light', `bold', or anything mentioned in `modus-themes-weights'.
@@ -1505,7 +1505,7 @@ Minor mode to aggressively keep your code always indented
 *** Winner
 #+BEGIN_SRC emacs-lisp
     (use-package winner
-      :straight (:type built-in)
+      :straight (winner :type built-in)
       :config
       (winner-mode))
 #+END_SRC
@@ -1608,7 +1608,7 @@ These settings do the following:
 ** Minibuffer
 #+BEGIN_SRC emacs-lisp
   (use-package minibuffer
-    :straight (:type built-in)
+    :straight (minibuffer :type built-in)
     :custom
     ;; Allow for minibuffer-ception. Sometimes we need another minibuffer command
     ;; while we're in the minibuffer.
@@ -1648,7 +1648,6 @@ These settings do the following:
 ** Popouts
 #+BEGIN_SRC emacs-lisp
   (use-package popper
-    :ensure t ; or :straight t
     :bind (("C-`"   . popper-toggle-latest)
            ("M-`"   . popper-cycle)
            ("C-M-`" . popper-toggle-type))
@@ -1797,7 +1796,7 @@ Help me.
 
 #+BEGIN_SRC emacs-lisp
   (use-package help
-    :straight (:type built-in)
+    :straight (help :type built-in)
     :custom
     (help-window-select t)
     (help-enable-variable-value-editing t))
@@ -2152,6 +2151,7 @@ locations. The =default-directory= variable is not changed in the process.
 #+begin_src emacs-lisp
   (use-package consult-eglot
     :after (eglot consult)
+    :disabled t
     :config
     (evil-set-command-property 'consult-eglot :jump t)
     :general
@@ -2556,7 +2556,7 @@ them, and fork projects among other things.
 *** Forge Search
 #+BEGIN_SRC emacs-lisp
   (use-package forge-search
-    :straight (:type git :host github :repo "eatse21/forge-search.el")
+    :straight (forge-search :type git :host github :repo "eatse21/forge-search.el")
     :after forge
     :general
     ((forge-topic-mode-map
@@ -2597,7 +2597,7 @@ them, and fork projects among other things.
 *** Bug References
 #+BEGIN_SRC emacs-lisp
   (use-package bug-reference
-    :straight (:type built-in)
+    :straight (bug-reference :type built-in)
     :hook ((text-mode . bug-reference-mode)
            (prog-mode . bug-reference-prog-mode)))
 #+END_SRC
@@ -2625,7 +2625,7 @@ Visual diff interface
 
 #+BEGIN_SRC emacs-lisp
   (use-package ediff
-    :straight (:type built-in)
+    :straight (ediff :type built-in)
     ;; Restore window config after quitting ediff
     :hook ((ediff-before-setup . ediff-save-window-conf)
            (ediff-quit         . ediff-restore-window-conf))
@@ -2653,7 +2653,7 @@ Visual diff interface
 ** Smerge
 #+BEGIN_SRC emacs-lisp
   (use-package smerge-mode
-    :straight (:type built-in)
+    :straight (smerge-mode :type built-in)
     :diminish smerge-mode
     :init
     (defhydra hydra-smerge-mode (:hint nil
@@ -2760,7 +2760,7 @@ Hence Something visually appealing.
 ** Base
 #+BEGIN_SRC emacs-lisp
   (use-package org
-    :straight (:type built-in)
+    :straight (org :type built-in)
     :custom
     ;; Agenda
     (org-agenda-time-grid '((daily today require-timed) "----------------------" nil))
@@ -2880,7 +2880,7 @@ Hence Something visually appealing.
 * Programming
 #+BEGIN_SRC emacs-lisp
   (use-package prog-mode
-    :straight (:type built-in)
+    :straight (prog-mode :type built-in)
     :config
     (global-prettify-symbols-mode +1)
     (setq prettify-symbols-unprettify-at-point 'right-edge
@@ -2892,7 +2892,7 @@ Hence Something visually appealing.
 ** LSP
 #+BEGIN_SRC emacs-lisp
   (use-package eglot
-    :straight (:type built-in)
+    :straight (eglot :type built-in)
     :hook (((c-mode
              c-ts-mode
              c++-mode
@@ -2940,7 +2940,7 @@ The future.
 #+BEGIN_SRC emacs-lisp
   (use-package treesit
     ;; :if (+emacs-features-p 'tree-sitter)
-    :straight (:type built-in)
+    :straight (treesit :type built-in)
     :init
     (setq treesit-language-source-alist '((bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
                                           (c . ("https://github.com/tree-sitter/tree-sitter-c"))
@@ -3074,7 +3074,7 @@ Giving parenthesis some brains.
 #+BEGIN_SRC emacs-lisp
   (use-package prism
     :disabled t
-    :straight (:type git :fetcher github :repo "alphapapa/prism.el")
+    :straight (prism :type git :fetcher github :repo "alphapapa/prism.el")
     :hook (((json-mode yaml-mode emacs-lisp-mode lisp-mode) . prism-mode)
            ((python-mode) . prism-whitespace-mode))
     :custom
@@ -3106,7 +3106,7 @@ Giving parenthesis some brains.
 *** Assembly
 #+BEGIN_SRC emacs-lisp
   (use-package asm-mode
-    :straight (:type built-in)
+    :straight (asm-mode :type built-in)
     :hook (asm-mode . indent-tabs-mode)
     :mode (rx "." (or "asl" "S" "s") eol))
 #+END_SRC
@@ -3114,7 +3114,7 @@ Giving parenthesis some brains.
 *** AWK
 #+BEGIN_SRC emacs-lisp
   (use-package awk
-    :straight (:type built-in)
+    :straight (awk :type built-in)
     :interpreter "gawk"
     :hook (awk-mode . +flylint)
 
@@ -3164,7 +3164,7 @@ common conventions.
 
 #+BEGIN_SRC emacs-lisp
   (use-package checkdoc
-    :straight (:type built-in)
+    :straight (checkdoc :type built-in)
     :init
     ;; Not sure why this isn't included by default.
     (put 'checkdoc-package-keywords-flag 'safe-local-variable #'booleanp))
@@ -3174,7 +3174,7 @@ common conventions.
 #+BEGIN_SRC emacs-lisp
   (use-package makem
     :disabled t
-    :straight (:type git :host github :repo "alphapapa/makem.sh")
+    :straight (makem :type git :host github :repo "alphapapa/makem.sh")
     :general
     (+local-leader-key
       :keymaps 'emacs-lisp-mode-map
@@ -3191,7 +3191,7 @@ common conventions.
 *** C/C++
 #+BEGIN_SRC emacs-lisp
   (use-package cc-mode
-    :straight (:type built-in)
+    :straight (cc-mode :type built-in)
     :custom
     (c-basic-offset 4)
     (c-default-style '((java-mode . "linux")
@@ -3201,7 +3201,7 @@ common conventions.
 
 #+Begin_SRC emacs-lisp
   (use-package c-ts-mode
-    :straight (:type built-in)
+    :straight (c-ts-mode :type built-in)
     :custom
     (c-ts-mode-indent-offst 4)
     (c-ts-mode-indent-style 'linux))
@@ -3218,7 +3218,7 @@ common conventions.
     :mode (rx (or (and "CMakeLists.txt" eol) ".cmake")))
 
   (use-package cmake-font-lock
-    :straight (:host github :repo "Lindydancer/cmake-font-lock" :files (:defaults "*"))
+    :straight (cmake-font-lock :host github :repo "Lindydancer/cmake-font-lock" :files (:defaults "*"))
     :hook (cmake-mode . cmake-font-lock-activate))
 
   ;; Modern version
@@ -3329,7 +3329,7 @@ common conventions.
 *** GDB
 #+BEGIN_SRC emacs-lisp
   (use-package gdb-mi
-    :straight (:type built-in)
+    :straight (gdb-mi :type built-in)
     :custom
     (gdb-mi-decode-strings 'utf-8)
     (gdb-show-main t)
@@ -3347,7 +3347,7 @@ common conventions.
 *** EDebug
 #+BEGIN_SRC emacs-lisp
   (use-package edebug
-    :straight (:type built-in)
+    :straight (edebug :type built-in)
     :custom
     ;; do not truncate print results in Edebug
     (edebug-print-level nil)
@@ -4009,7 +4009,7 @@ Cross-referencing.
 
 #+BEGIN_SRC emacs-lisp
   (use-package xref
-    :straight (:type built-in)
+    :straight (xref :type built-in)
     :hook ((xref-after-return xreft-after-jumper) . recenter)
     :custom
     (setq xref-search-program 'ripgrep)
@@ -4021,7 +4021,7 @@ Cross-referencing.
 ** Compile
 #+BEGIN_SRC emacs-lisp
   (use-package compile
-    :straight (:type built-in)
+    :straight (compile :type built-in)
     :hook (
            (compilation-filter . colorize-compilation-buffer)
            (next-error . recenter))
@@ -4114,7 +4114,7 @@ execute one.
 ** Info
 #+BEGIN_SRC emacs-lisp
   (use-package info
-    :straight (:type built-in)
+    :straight (info :type built-in)
     :general
     (+evil
       :keymaps 'Info-mode-map
@@ -4133,7 +4133,7 @@ execute one.
 ** Tramp
 #+BEGIN_SRC emacs-lisp
   (use-package tramp
-    :straight (:type built-in)
+    :straight (tramp :type built-in)
     :custom
     (tramp-default-method "ssh")
     (tramp-default-remote-shell "/bin/bash")
@@ -4158,7 +4158,7 @@ execute one.
 *** Dictionary
 #+BEGIN_SRC emacs-lisp
   (use-package dictionary
-    :straight (:type built-in)
+    :straight (dictionary :type built-in)
     :bind
     ("M-#" . dictionary-lookup-definition))
 #+END_SRC
@@ -4166,7 +4166,7 @@ execute one.
 *** Flyspell
 #+BEGIN_SRC emacs-lisp
   (use-package flyspell
-    :straight (:type built-in)
+    :straight (flyspell :type built-in)
     :hook
     ((text-mode . flyspell-mode)
      (prog-mode . flyspell-prog-mode))
@@ -4199,7 +4199,7 @@ execute one.
 
 #+BEGIN_SRC emacs-lisp
   (use-package ispell
-    :straight (:type built-in)
+    :straight (ispell :type built-in)
     :after flyspell
     :custom
     (ispell-silently-savep t)
@@ -4225,6 +4225,7 @@ Correct misspelled words using vertico
 *** Flymake
 #+BEGIN_SRC emacs-lisp
   (use-package flymake
+    :disabled t
     :straight (:type built-in)
     :custom
     (flymake-note-bitmap '(+dot-fringe-bitmap compilation-info))
@@ -4358,14 +4359,14 @@ Unbelievably, but true.
 
 #+BEGIN_SRC emacs-lisp
   (use-package debbugs
-    :straight (:type built-in)
+    :straight (debbugs :type built-in)
     :defer t)
 #+END_SRC
 
 ** Gnus
 #+BEGIN_SRC emacs-lisp
   (use-package gnus
-    :straight (:type built-in)
+    :straight (gnus :type built-in)
     :commands gnus
     :config
     (progn
@@ -4392,24 +4393,24 @@ Unbelievably, but true.
 
   (use-package gnus-art
     :after gnus
-    :straight (:type built-in)
+    :straight (gnus-art :type built-in)
     :custom
     (gnus-treat-strip-cr t))
 
   (use-package gnus-agent
     :after gnus
-    :straight (:type built-in)
+    :straight (gnus-agent :type built-in)
     :custom
     (gnus-agent-synchronize-flags 'ask))
 
   (use-package gnus-msg
     :after gnus
-    :straight (:type built-in))
+    :straight (gnus-msg :type built-in))
 
 
   (use-package gnus-sum
     :after gnus
-    :straight (:type built-in)
+    :straight (gnus-sum :type built-in)
     :config
     (setq-default
      gnus-summary-line-format "%0{%U%R%z%} %3t %3{│%} %1{%d%} %5k %-20,20n%3{│%} %B%S\n"
@@ -4428,7 +4429,7 @@ Unbelievably, but true.
 ** Goto Addresses
 #+BEGIN_SRC emacs-lisp
   (use-package goto-addr
-    :straight (:type built-in)
+    :straight (goto-addr :type built-in)
     :config
     (global-goto-address-mode))
 #+END_SRC
@@ -4472,7 +4473,7 @@ such as =$GIT_EDITOR=. To always use these variants add this to your init file:
 ** EPG
 #+BEGIN_SRC emacs-lisp
   (use-package epg
-    :straight (:type built-in)
+    :straight (epg :type built-in)
     :custom
     (epg-pinentry-mode 'loopback)
     (epg-user-id "BE70541948D9FB3FF0674B92997C87E6BE5239F0"))
@@ -4481,7 +4482,7 @@ such as =$GIT_EDITOR=. To always use these variants add this to your init file:
 ** EPA
 #+BEGIN_SRC emacs-lisp
   (use-package epa
-    :straight (:type built-in)
+    :straight (epa :type built-in)
     ;; force Emacs to use its own internal password prompt instead of an external
     ;; pinentry program.
     :preface (setenv "GPG_AGENT_INFO" nil)
@@ -4498,7 +4499,7 @@ such as =$GIT_EDITOR=. To always use these variants add this to your init file:
 ** MM-Encode
 #+BEGIN_SRC emacs-lisp
   (use-package mm-encode
-    :straight (:type built-in)
+    :straight (mm-encode :type built-in)
     :custom
     (mm-encrypt-option nil)
     (mm-sign-option nil)
@@ -4509,7 +4510,7 @@ such as =$GIT_EDITOR=. To always use these variants add this to your init file:
 ** MML-Sec
 #+BEGIN_SRC emacs-lisp
   (use-package mml-sec
-    :straight (:type built-in)
+    :straight (mml-sec :type built-in)
     :custom
     (mml2015-use 'epg)
     (mml-secure-smime-encrypt-to-self  t)
