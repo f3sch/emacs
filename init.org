@@ -4301,21 +4301,24 @@ Correct misspelled words using vertico
     (flymake-collection-hook-ignore-modes '(eglot--managed-mode)))
 #+END_SRC
 
-** Keycast
+** Command-Log
 In case I am sharing my screen with people and I want to show which functions
 are called on my keystrokes since I don’t exactly use standard keybindings.
 
 #+begin_src emacs-lisp
-(use-package keycast
-  :defer t
-  :config
-  (define-minor-mode keycast-mode
-    "Show current command and its key binding in the mode line."
-    :global t
-    (if keycast-mode
-        (add-hook 'pre-command-hook 'keycast--update t)
-      (remove-hook 'pre-command-hook 'keycast--update)))
-  (add-to-list 'global-mode-string '("" mode-line-keycast " ")))
+  (use-package command-log
+    :straight '(command-log
+                :type git :host github :repo "positron-solutions/command-log")
+    :commands command-log-toggle
+    :custom
+    (command-log-window-size 100)
+    (command-log-window-text-scale 2 "Command log two steps higher text scale")
+    (command-log-logging-shows-buffer t "Toggling will show the buffer.")
+    (command-log-hiding-disables-logging t "Toggling visible buffer turns off logging.")
+    (command-log-disabling-logging-kills-buffer t "The buffer will be new when displayed again.")
+    (command-log-log-globally t "Auto-enable with global minor mode (including minibuffer)")
+    (command-log-filter-commands '(self-insert-command) "Be chatty.
+     Show everything besides self-insert-command"))
 #+end_src
 
 ** Keyfreq
@@ -4690,6 +4693,7 @@ a screenshot of a specific area of a buffer and make it look nice.
     :infix "t"
     "" '(:ignore t :wk "Toggle")
     "c" '(display-fill-column-indicator-mode :wk "Fill Column")
+    "K" '(command-log-toggle :wk "Command Log")
     "d" '(disk-usage-here :wk "Show Disk Usage Here"))
 #+END_SRC
 
